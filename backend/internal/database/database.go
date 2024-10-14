@@ -21,13 +21,13 @@ type service struct {
 }
 
 var (
-	host = os.Getenv("BLUEPRINT_DB_HOST")
-	port = os.Getenv("BLUEPRINT_DB_PORT")
-	//database = os.Getenv("BLUEPRINT_DB_DATABASE")
+	host = os.Getenv("DB_HOST")
+	port = os.Getenv("DB_PORT")
+	database = os.Getenv("DB_DATABASE_NAME")
 )
 
 func New() Service {
-	client, err := mongo.Connect(context.Background(), options.Client().ApplyURI(fmt.Sprintf("mongodb://%s:%s", host, port)))
+	client, err := mongo.Connect(context.Background(), options.Client().ApplyURI(fmt.Sprintf("mongodb://%s:%s/%s", host, port, database)))
 
 	if err != nil {
 		log.Fatal(err)

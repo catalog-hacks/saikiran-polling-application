@@ -4,8 +4,24 @@
 all: build test
 
 build:
-	@echo "Building..."
-	@go build -o main.exe cmd/api/main.go
+	@echo "Building for the current platform..."
+	@go build -o build/api ./cmd/api
+
+# Cross-platform builds
+#Build for Windows
+build-windows:
+	@echo "Building for Windows..."
+	set GOOS=windows && set GOARCH=amd64 && go build -o build/windows/api.exe ./cmd/api
+
+# Build for Linux
+build-linux:
+	@echo "Building for Linux..."
+	set GOOS=linux && set GOARCH=amd64 && go build -o build/linux/api ./cmd/api
+
+# Build for macOS
+build-darwin:
+	@echo "Building for macOS..."
+	set GOOS=darwin && set GOARCH=amd64 && go build -o build/darwin/api ./cmd/api
 
 # Run the application
 run:
