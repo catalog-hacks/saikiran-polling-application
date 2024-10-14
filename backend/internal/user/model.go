@@ -8,11 +8,11 @@ type User struct {
 	Email string `bson:"email" json:"email"`
 	CreatedAt int64 `bson:"created_at" json:"created_at"`
 	CreatedPolls []primitive.ObjectID `bson:"created_polls" json:"created_polls"`
-	WebAuthCreds []WebAuthCredential `bson:"webauthn_creds" json:"webauthn_creds"`
+	WebAuthnCreds []WebAuthnCredential `bson:"webauthn_creds" json:"webauthn_creds"`
 }
 
 
-type WebAuthCredential struct {
+type WebAuthnCredential struct {
 	ID string `bson:"_id" json:"id"`
 	PublicKey []byte `bson:"public_key" json:"public_key"`
 	CredentialID string `bson:"credential_id" json:"credential_id"`
