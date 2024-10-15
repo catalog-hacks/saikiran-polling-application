@@ -21,10 +21,11 @@ func (s *Server) RegisterRoutes() http.Handler {
 
 	handler := user.NewUserHandler(s.userService, s.webAuthn)
 	// WebAuthn Routes for Passkey Authentication
-	mux.HandleFunc("/api/passkey/registerStart", handler.BeginRegistration)  
-	mux.HandleFunc("/api/passkey/registerFinish", handler.FinishRegistration) 
-	mux.HandleFunc("/api/passkey/loginStart", handler.BeginLogin)             
-	mux.HandleFunc("/api/passkey/loginFinish", handler.FinishLogin)           
+	mux.HandleFunc("/register/begin", handler.BeginRegistration)  
+	mux.HandleFunc("/register/finish", handler.FinishRegistration) 
+	mux.HandleFunc("/login/begin", handler.BeginLogin)             
+	mux.HandleFunc("/login/finsih", handler.FinishLogin) 
+	mux.HandleFunc("/auth/verify", handler.VerifyCredentials)          
 
 	// Other User-Related Routes (for future extensions)
 	// e.g., mux.HandleFunc("/api/user/profile", s.UserProfileHandler)
