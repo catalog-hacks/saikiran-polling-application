@@ -12,42 +12,30 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-type Service interface {
-	Health() map[string]string
-}
-
-type service struct {
-	db *mongo.Client
-}
-
 var (
-	host = os.Getenv("DB_HOST")
-	port = os.Getenv("DB_PORT")
-	database = os.Getenv("DB_DATABASE_NAME")
+	host     = os.Getenv("DB_HOST")
+	port     = os.Getenv("DB_PORT")
+	dbName   = os.Getenv("DB_DATABASE_NAME")
 )
 
-func New() Service {
-	client, err := mongo.Connect(context.Background(), options.Client().ApplyURI(fmt.Sprintf("mongodb://%s:%s/%s", host, port, database)))
-
-	if err != nil {
-		log.Fatal(err)
-
-	}
-	return &service{
-		db: client,
-	}
-}
-
-func (s *service) Health() map[string]string {
-	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+func New() (*mongo.Database, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	err := s.db.Ping(ctx, nil)
+	clientOptions := options.Client().ApplyURI(fmt.Sprintf("mongodb://%s:%s", host, port))
+	client, err := mongo.Connect(ctx, clientOptions)
 	if err != nil {
-		log.Fatalf(fmt.Sprintf("db down: %v", err))
+		return nil, fmt.Errorf("failed to connect to MongoDB: %v", err)
 	}
 
-	return map[string]string{
-		"message": "It's healthy",
+	// Ping the database to verify the connection
+	err = client.Ping(ctx, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to ping MongoDB: %v", err)
 	}
+
+	log.Println("Connected to MongoDB")
+
+	// Return the database
+	return client.Database(dbName), nil
 }
