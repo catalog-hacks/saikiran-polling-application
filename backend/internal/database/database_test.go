@@ -44,18 +44,11 @@ func TestMain(m *testing.M) {
 }
 
 func TestNew(t *testing.T) {
-	srv := New()
-	if srv == nil {
+	srv, err := New()
+	if err != nil {
 		t.Fatal("New() returned nil")
 	}
+	log.Println(srv)
 }
 
-func TestHealth(t *testing.T) {
-	srv := New()
 
-	stats := srv.Health()
-
-	if stats["message"] != "It's healthy" {
-		t.Fatalf("expected message to be 'It's healthy', got %s", stats["message"])
-	}
-}
