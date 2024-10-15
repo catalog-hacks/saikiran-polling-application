@@ -22,9 +22,24 @@ type Server struct {
 
 func NewServer() *http.Server {
     port, _ := strconv.Atoi(os.Getenv("PORT"))
+
+    userService := user.NewUserService()
+
+    web, err := webauthn.New(&webauthn.Config{
+		RPDisplayName: "Your App",
+		RPID:          "localhost",
+		RPOrigins:     []string{"http://localhost:3000"},
+	})
+    if err != nil {
+        fmt.Printf("Failed to initialize WebAuthn: %v\n", err)
+        os.Exit(1) // Exit if initialization fails
+    }
+
     NewServer := &Server{
         port: port,
         db:   database.New(),
+        userService: userService,
+        webAuthn:    web,
     }
 
     // Declare Server config
