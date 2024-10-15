@@ -13,13 +13,11 @@ import (
 func (s *Server) RegisterRoutes() http.Handler {
 	mux := http.NewServeMux()
 
-	// Health Check Route
-	mux.HandleFunc("/health", s.healthHandler)
 
 	// Hello World Route (for testing)
 	mux.HandleFunc("/", s.HelloWorldHandler)
 
-	handler := user.NewUserHandler(s.userService, s.webAuthn)
+	handler := user.NewUserHandler(s.userService, s.webAuthn, s.db)
 	// WebAuthn Routes for Passkey Authentication
 	mux.HandleFunc("/register/begin", handler.BeginRegistration)  
 	mux.HandleFunc("/register/finish", handler.FinishRegistration) 
@@ -45,12 +43,4 @@ func (s *Server) HelloWorldHandler(w http.ResponseWriter, r *http.Request) {
 	_, _ = w.Write(jsonResp)
 }
 
-func (s *Server) healthHandler(w http.ResponseWriter, r *http.Request) {
-	jsonResp, err := json.Marshal(s.db.Health())
 
-	if err != nil {
-		log.Fatalf("error handling JSON marshal. Err: %v", err)
-	}
-
-	_, _ = w.Write(jsonResp)
-}
