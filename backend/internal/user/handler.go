@@ -211,3 +211,46 @@ func (h *UserHandler) FinishLogin(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 }
+
+func (h *UserHandler) VerifyCredentials(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		Email  string `json:"email"`
+		Action string `json:"action"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	user, err := h.userService.GetUserByEmail(req.Email)
+	if err != nil {
+		http.Error(w, "User not found", http.StatusNotFound)
+		return
+	}
+
+	response := map[string]interface{}{
+		"id":    user.ID.Hex(),
+		"email": user.Email,
+		"name":  user.Name,
+	}
+
+	if req.Action == "register" {
+		// For registration, we just need to confirm the user exists
+		if len(user.Credentials) > 0 {
+			http.Error(w, "User already registered", http.StatusConflict)
+			return
+		}
+	} else if req.Action == "login" {
+		// For login, we need to confirm the user has registered credentials
+		if len(user.Credentials) == 0 {
+			http.Error(w, "User not registered", http.StatusUnauthorized)
+			return
+		}
+	} else {
+		http.Error(w, "Invalid action", http.StatusBadRequest)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
+}
