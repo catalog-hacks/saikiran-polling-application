@@ -2,6 +2,7 @@ package server
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"strconv"
@@ -11,19 +12,23 @@ import (
 	"github.com/SaiKiranMatta/nextjs-golang-polling-application/backend/internal/user"
 	"github.com/go-webauthn/webauthn/webauthn"
 	_ "github.com/joho/godotenv/autoload"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type Server struct {
     port        int
-    db          database.Service
+    db          *mongo.Database
     userService *user.UserService
     webAuthn    *webauthn.WebAuthn
 }
 
 func NewServer() *http.Server {
     port, _ := strconv.Atoi(os.Getenv("PORT"))
-
-    userService := user.NewUserService()
+    db, err := database.New()
+	if err != nil {
+		log.Fatalf("Failed to initialize database: %v", err)
+	}
+    userService := user.NewUserService(db)
 
     web, err := webauthn.New(&webauthn.Config{
 		RPDisplayName: "Your App",
@@ -37,7 +42,7 @@ func NewServer() *http.Server {
 
     NewServer := &Server{
         port: port,
-        db:   database.New(),
+        db:   db,
         userService: userService,
         webAuthn:    web,
     }
