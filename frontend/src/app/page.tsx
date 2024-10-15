@@ -1,9 +1,14 @@
-import Image from "next/image";
+import { NextPage } from "next";
+import Link from "next/link";
 
-export default function Home() {
+interface Props {}
+
+const Page: NextPage<Props> = ({}) => {
     return (
         <div>
-            <h1>Hello, World!</h1>
+            <p>Welcome to the home page</p>
         </div>
     );
-}
+};
+
+export default Page;
