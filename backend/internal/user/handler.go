@@ -1,55 +1,28 @@
 package user
 
 import (
+	"bytes"
 	"encoding/json"
 	"net/http"
-	"sync"
 
+	"github.com/go-webauthn/webauthn/protocol"
 	"github.com/go-webauthn/webauthn/webauthn"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type UserHandler struct {
 	userService *UserService
 	webauthn    *webauthn.WebAuthn
-	sessionStore *SessionStore
+	db          *mongo.Database
 }
 
-type SessionStore struct {
-	sessions map[string]webauthn.SessionData
-	mu       sync.RWMutex
-}
-
-func NewSessionStore() *SessionStore {
-	return &SessionStore{
-		sessions: make(map[string]webauthn.SessionData),
-	}
-}
-
-func (s *SessionStore) Store(key string, data webauthn.SessionData) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	s.sessions[key] = data
-}
-
-func (s *SessionStore) Get(key string) (webauthn.SessionData, bool) {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-	data, ok := s.sessions[key]
-	return data, ok
-}
-
-func (s *SessionStore) Delete(key string) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	delete(s.sessions, key)
-}
-
-func NewUserHandler(userService *UserService, webauthn *webauthn.WebAuthn) *UserHandler {
+func NewUserHandler(userService *UserService, webauthn *webauthn.WebAuthn, db *mongo.Database) *UserHandler {
 	return &UserHandler{
 		userService: userService,
 		webauthn:    webauthn,
-		sessionStore: NewSessionStore(),
+		db:          db,
 	}
 }
 
@@ -86,15 +59,31 @@ func (h *UserHandler) BeginRegistration(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	h.sessionStore.Store(user.ID.Hex(), *sessionData)
+	// Store session data in MongoDB
+	_, err = h.db.Collection("sessions").InsertOne(r.Context(), bson.M{
+		"userId": user.ID,
+		"data":   sessionData,
+	})
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 
 	if err := h.userService.CreateUser(user); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
+	response := struct {
+		UserID  string                        `json:"userId"`
+		Options *protocol.CredentialCreation `json:"options"`
+	}{
+		UserID:  user.ID.Hex(),
+		Options: options,
+	}
+
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(options)
+	json.NewEncoder(w).Encode(response)
 }
 
 func (h *UserHandler) FinishRegistration(w http.ResponseWriter, r *http.Request) {
@@ -121,14 +110,30 @@ func (h *UserHandler) FinishRegistration(w http.ResponseWriter, r *http.Request)
 
 	webAuthnUser := NewWebAuthnUser(user)
 
-	sessionData, ok := h.sessionStore.Get(req.UserID)
-	if !ok {
+	// Retrieve session data from MongoDB
+	var sessionDataDoc struct {
+		Data webauthn.SessionData `bson:"data"`
+	}
+	err = h.db.Collection("sessions").FindOne(r.Context(), bson.M{"userId": userID}).Decode(&sessionDataDoc)
+	if err != nil {
 		http.Error(w, "Session not found", http.StatusBadRequest)
 		return
 	}
-	defer h.sessionStore.Delete(req.UserID)
+	
+	// Delete session data after retrieval
+	_, err = h.db.Collection("sessions").DeleteOne(r.Context(), bson.M{"userId": userID})
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 
-	credential, err := h.webauthn.FinishRegistration(webAuthnUser, sessionData, r)
+	newReq, err := createNewRequestWithBody(req.Data, r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	credential, err := h.webauthn.FinishRegistration(webAuthnUser, sessionDataDoc.Data, newReq)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -166,7 +171,15 @@ func (h *UserHandler) BeginLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.sessionStore.Store(user.ID.Hex(), *sessionData)
+	// Store session data in MongoDB
+	_, err = h.db.Collection("sessions").InsertOne(r.Context(), bson.M{
+		"userId": user.ID,
+		"data":   sessionData,
+	})
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(options)
@@ -174,7 +187,7 @@ func (h *UserHandler) BeginLogin(w http.ResponseWriter, r *http.Request) {
 
 func (h *UserHandler) FinishLogin(w http.ResponseWriter, r *http.Request) {
 	var req struct {
-		UserID string          `json:"userId"`
+		email string          `json:"email"`
 		Data   json.RawMessage `json:"data"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -182,13 +195,13 @@ func (h *UserHandler) FinishLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userID, err := primitive.ObjectIDFromHex(req.UserID)
-	if err != nil {
-		http.Error(w, "Invalid user ID", http.StatusBadRequest)
-		return
-	}
+	// userID, err := primitive.ObjectIDFromHex(req.UserID)
+	// if err != nil {
+	// 	http.Error(w, "Invalid user ID", http.StatusBadRequest)
+	// 	return
+	// }
 
-	user, err := h.userService.GetUser(userID)
+	user, err := h.userService.GetUserByEmail(req.email)
 	if err != nil {
 		http.Error(w, "User not found", http.StatusNotFound)
 		return
@@ -196,14 +209,29 @@ func (h *UserHandler) FinishLogin(w http.ResponseWriter, r *http.Request) {
 
 	webAuthnUser := NewWebAuthnUser(user)
 
-	sessionData, ok := h.sessionStore.Get(req.UserID)
-	if !ok {
+	// Retrieve session data from MongoDB
+	var sessionDataDoc struct {
+		Data webauthn.SessionData `bson:"data"`
+	}
+	err = h.db.Collection("sessions").FindOne(r.Context(), bson.M{"userId": user.ID}).Decode(&sessionDataDoc)
+	if err != nil {
 		http.Error(w, "Session not found", http.StatusBadRequest)
 		return
 	}
-	defer h.sessionStore.Delete(req.UserID)
+	
+	// Delete session data after retrieval
+	_, err = h.db.Collection("sessions").DeleteOne(r.Context(), bson.M{"userId": user.ID})
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 
-	_, err = h.webauthn.FinishLogin(webAuthnUser, sessionData, r)
+	newReq, err := createNewRequestWithBody(req.Data, r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	_, err = h.webauthn.FinishLogin(webAuthnUser, sessionDataDoc.Data, newReq)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusUnauthorized)
 		return
@@ -235,13 +263,11 @@ func (h *UserHandler) VerifyCredentials(w http.ResponseWriter, r *http.Request) 
 	}
 
 	if req.Action == "register" {
-		// For registration, we just need to confirm the user exists
-		if len(user.Credentials) > 0 {
-			http.Error(w, "User already registered", http.StatusConflict)
+		if len(user.Credentials) == 0 {
+			http.Error(w, "User not registered", http.StatusUnauthorized)
 			return
 		}
 	} else if req.Action == "login" {
-		// For login, we need to confirm the user has registered credentials
 		if len(user.Credentials) == 0 {
 			http.Error(w, "User not registered", http.StatusUnauthorized)
 			return
@@ -254,3 +280,15 @@ func (h *UserHandler) VerifyCredentials(w http.ResponseWriter, r *http.Request) 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
 }
+
+func createNewRequestWithBody(data json.RawMessage, originalReq *http.Request) (*http.Request, error) {
+	bodyReader := bytes.NewReader(data)
+	newReq, err := http.NewRequest(originalReq.Method, originalReq.URL.String(), bodyReader)
+	if err != nil {
+		return nil, err
+	}
+	newReq.Header = originalReq.Header
+	newReq = newReq.WithContext(originalReq.Context())
+	return newReq, nil
+}
+
