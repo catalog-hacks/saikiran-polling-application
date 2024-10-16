@@ -22,7 +22,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 	mux.HandleFunc("/register/begin", handler.BeginRegistration)  
 	mux.HandleFunc("/register/finish", handler.FinishRegistration) 
 	mux.HandleFunc("/login/begin", handler.BeginLogin)             
-	mux.HandleFunc("/login/finsih", handler.FinishLogin) 
+	mux.HandleFunc("/login/finish", handler.FinishLogin) 
 	mux.HandleFunc("/auth/verify", handler.VerifyCredentials)          
 
 	// Other User-Related Routes (for future extensions)
