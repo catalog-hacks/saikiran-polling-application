@@ -3,6 +3,7 @@ package user
 import (
 	"bytes"
 	"encoding/json"
+	"log"
 	"net/http"
 
 	"github.com/go-webauthn/webauthn/protocol"
@@ -156,7 +157,7 @@ func (h *UserHandler) BeginLogin(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-
+	
 	user, err := h.userService.GetUserByEmail(req.Email)
 	if err != nil {
 		http.Error(w, "User not found", http.StatusNotFound)
@@ -187,7 +188,7 @@ func (h *UserHandler) BeginLogin(w http.ResponseWriter, r *http.Request) {
 
 func (h *UserHandler) FinishLogin(w http.ResponseWriter, r *http.Request) {
 	var req struct {
-		email string          `json:"email"`
+		Email string          `json:"email"`
 		Data   json.RawMessage `json:"data"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -201,7 +202,7 @@ func (h *UserHandler) FinishLogin(w http.ResponseWriter, r *http.Request) {
 	// 	return
 	// }
 
-	user, err := h.userService.GetUserByEmail(req.email)
+	user, err := h.userService.GetUserByEmail(req.Email)
 	if err != nil {
 		http.Error(w, "User not found", http.StatusNotFound)
 		return
@@ -222,6 +223,7 @@ func (h *UserHandler) FinishLogin(w http.ResponseWriter, r *http.Request) {
 	// Delete session data after retrieval
 	_, err = h.db.Collection("sessions").DeleteOne(r.Context(), bson.M{"userId": user.ID})
 	if err != nil {
+		log.Printf("Error deleting session: %v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -233,6 +235,7 @@ func (h *UserHandler) FinishLogin(w http.ResponseWriter, r *http.Request) {
 	}
 	_, err = h.webauthn.FinishLogin(webAuthnUser, sessionDataDoc.Data, newReq)
 	if err != nil {
+		log.Println(err.Error())
 		http.Error(w, err.Error(), http.StatusUnauthorized)
 		return
 	}
