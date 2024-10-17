@@ -98,5 +98,39 @@ export function usePasskeyAuth() {
         }
     };
 
-    return { register, login, error };
+    const verifyPasskey = async (email: string) => {
+        try {
+            // Start authentication
+            const beginRes = await fetch("/api/auth/login/begin", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email }),
+            });
+            const beginData = await beginRes.json();
+
+            // Perform client-side authentication
+            const authResult = await startAuthentication(
+                beginData.data.publicKey
+            );
+
+            // Verify authentication
+            const verifyRes = await fetch("/api/auth/login/finish", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, data: authResult }),
+            });
+
+            if (verifyRes.ok) {
+                return true; // Verification successful
+            } else {
+                setError("Passkey verification failed");
+                return false; // Verification failed
+            }
+        } catch (err) {
+            setError("Authentication failed");
+            console.error(err);
+        }
+    };
+
+    return { register, login, verifyPasskey, error };
 }
