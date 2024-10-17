@@ -28,9 +28,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                 if (verifyRes.ok) {
                     const userData = await verifyRes.json();
                     return {
-                        id: userData.id,
-                        email: userData.email,
-                        name: userData.name,
+                        id: userData.data.id,
+                        email: userData.data.email,
+                        name: userData.data.name,
                     };
                 }
 
@@ -42,6 +42,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         async jwt({ token, user }) {
             if (user) {
                 token.id = user.id;
+                console.log(user.id);
             }
             return token;
         },
