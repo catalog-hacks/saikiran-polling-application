@@ -64,7 +64,7 @@ func (s *VoteService) GetUserVote(ctx context.Context, pollID, userID primitive.
 
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			return UserVoteResponse{}, errors.New("no vote found for user in this poll")
+			return UserVoteResponse{OptionIDs: []primitive.ObjectID{}}, err
 		}
 		return UserVoteResponse{}, err
 	}
