@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/SaiKiranMatta/nextjs-golang-polling-application/backend/internal/database"
+	"github.com/SaiKiranMatta/nextjs-golang-polling-application/backend/internal/poll"
 	"github.com/SaiKiranMatta/nextjs-golang-polling-application/backend/internal/user"
 	"github.com/go-webauthn/webauthn/webauthn"
 	_ "github.com/joho/godotenv/autoload"
@@ -19,6 +20,7 @@ type Server struct {
     port        int
     db          *mongo.Database
     userService *user.UserService
+    pollService *poll.PollService
     webAuthn    *webauthn.WebAuthn
 }
 
@@ -29,6 +31,7 @@ func NewServer() *http.Server {
 		log.Fatalf("Failed to initialize database: %v", err)
 	}
     userService := user.NewUserService(db)
+    pollService := poll.NewPollService(db)
 
     web, err := webauthn.New(&webauthn.Config{
 		RPDisplayName: "Your App",
@@ -44,6 +47,7 @@ func NewServer() *http.Server {
         port: port,
         db:   db,
         userService: userService,
+        pollService: pollService,
         webAuthn:    web,
     }
 

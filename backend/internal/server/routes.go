@@ -5,29 +5,35 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/SaiKiranMatta/nextjs-golang-polling-application/backend/internal/poll"
 	"github.com/SaiKiranMatta/nextjs-golang-polling-application/backend/internal/user"
+	"github.com/gorilla/mux"
 )
 
 
 
 func (s *Server) RegisterRoutes() http.Handler {
-	mux := http.NewServeMux()
+	mux := mux.NewRouter()
 
 
 	// Hello World Route (for testing)
 	mux.HandleFunc("/", s.HelloWorldHandler)
 
-	handler := user.NewUserHandler(s.userService, s.webAuthn, s.db)
-	// WebAuthn Routes for Passkey Authentication
-	mux.HandleFunc("/register/begin", handler.BeginRegistration)  
-	mux.HandleFunc("/register/finish", handler.FinishRegistration) 
-	mux.HandleFunc("/login/begin", handler.BeginLogin)             
-	mux.HandleFunc("/login/finsih", handler.FinishLogin) 
-	mux.HandleFunc("/auth/verify", handler.VerifyCredentials)          
+	userHandler := user.NewUserHandler(s.userService, s.webAuthn, s.db)
+	
+	mux.HandleFunc("/register/begin", userHandler.BeginRegistration)  
+	mux.HandleFunc("/register/finish", userHandler.FinishRegistration) 
+	mux.HandleFunc("/login/begin", userHandler.BeginLogin)             
+	mux.HandleFunc("/login/finish", userHandler.FinishLogin) 
+	mux.HandleFunc("/auth/verify", userHandler.VerifyCredentials)     
+	
+	pollHandler := poll.NewPollHandler(s.pollService)
+	mux.HandleFunc("/polls/{id}", pollHandler.GetPoll).Methods("GET")
+	mux.HandleFunc("/polls", pollHandler.CreatePoll).Methods("POST")
+	mux.HandleFunc("/polls/{id}/vote", pollHandler.Vote).Methods("POST")
+	mux.HandleFunc("/polls/{id}/stream", pollHandler.StreamPollUpdates).Methods("GET")
 
-	// Other User-Related Routes (for future extensions)
-	// e.g., mux.HandleFunc("/api/user/profile", s.UserProfileHandler)
-
+	
 	return mux
 }
 

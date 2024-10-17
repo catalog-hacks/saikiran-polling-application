@@ -7,7 +7,7 @@ import { redirect } from "next/navigation";
 import { useEffect, useState } from "react";
 
 export default function AuthPage() {
-    const [isRegistering, setIsRegistering] = useState(true);
+    const [isRegistering, setIsRegistering] = useState(false);
     const { data: session, status } = useSession();
     const [loading, setLoading] = useState(true);
 
