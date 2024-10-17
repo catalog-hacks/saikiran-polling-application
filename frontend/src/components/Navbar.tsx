@@ -7,10 +7,17 @@ import { MenuIcon } from "lucide-react";
 
 const Navbar = () => {
     const { data: session, status } = useSession();
+    const [loading, setLoading] = useState(true);
+    useEffect(() => {
+        if (status === "loading") {
+        } else {
+            setLoading(false);
+        }
+    }, [status]);
 
     return (
         <nav
-            className={`fixed top-0 left-0 w-full z-50 flex justify-between items-center p-4 transition-all duration-300 ${"bg-white shadow-md dark:bg-zinc-900"}`}
+            className={`fixed top-0 left-0 w-full h-20 z-50 flex justify-between items-center p-4 transition-all duration-300 ${"bg-white shadow-md dark:bg-zinc-900"}`}
         >
             <div className="flex items-center">
                 <Link
@@ -37,21 +44,25 @@ const Navbar = () => {
             </div>
 
             <div className="flex items-center space-x-4">
-                {status === "authenticated" ? (
+                {!loading && (
                     <>
-                        <button
-                            onClick={() => signOut()}
-                            className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition"
-                        >
-                            Sign Out
-                        </button>
+                        {status === "authenticated" ? (
+                            <>
+                                <button
+                                    onClick={() => signOut()}
+                                    className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition"
+                                >
+                                    Sign Out
+                                </button>
+                            </>
+                        ) : (
+                            <Link href="/auth">
+                                <button className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition">
+                                    Sign In
+                                </button>
+                            </Link>
+                        )}
                     </>
-                ) : (
-                    <Link href="/auth">
-                        <button className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition">
-                            Sign In
-                        </button>
-                    </Link>
                 )}
 
                 <button className="md:hidden">
