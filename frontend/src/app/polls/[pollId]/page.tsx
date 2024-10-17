@@ -1,5 +1,6 @@
 "use client";
 
+import { usePasskeyAuth } from "@/hooks/usePasskeyAuth";
 import { Poll } from "@/types/poll";
 import { NextPage } from "next";
 import { useSession } from "next-auth/react";
@@ -11,6 +12,7 @@ interface PollPageProps {
 
 const PollPage: NextPage<PollPageProps> = ({ params }) => {
     const { data: session, status } = useSession();
+    const { verifyPasskey } = usePasskeyAuth();
     const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
     const [poll, setPoll] = useState<Poll | null>(null);
     const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
@@ -56,7 +58,12 @@ const PollPage: NextPage<PollPageProps> = ({ params }) => {
     }, [params.pollId]);
 
     const handleVote = async () => {
+        if (!session?.user?.email) return;
         try {
+            const isVerified = await verifyPasskey(session?.user?.email);
+            if (!isVerified) {
+                return;
+            }
             await fetch(`${backendUrl}/polls/${params.pollId}/vote`, {
                 method: "POST",
                 headers: {
