@@ -11,6 +11,7 @@ import (
 	"github.com/SaiKiranMatta/nextjs-golang-polling-application/backend/internal/database"
 	"github.com/SaiKiranMatta/nextjs-golang-polling-application/backend/internal/poll"
 	"github.com/SaiKiranMatta/nextjs-golang-polling-application/backend/internal/user"
+	"github.com/SaiKiranMatta/nextjs-golang-polling-application/backend/internal/vote"
 	"github.com/go-webauthn/webauthn/webauthn"
 	_ "github.com/joho/godotenv/autoload"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -31,7 +32,8 @@ func NewServer() *http.Server {
 		log.Fatalf("Failed to initialize database: %v", err)
 	}
     userService := user.NewUserService(db)
-    pollService := poll.NewPollService(db)
+    voteService := vote.NewVoteService(db)
+    pollService := poll.NewPollService(db, voteService, userService)
 
     web, err := webauthn.New(&webauthn.Config{
 		RPDisplayName: "Your App",
