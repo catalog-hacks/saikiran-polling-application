@@ -50,14 +50,14 @@ const Navbar = () => {
                             <>
                                 <button
                                     onClick={() => signOut()}
-                                    className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition"
+                                    className="px-6 py-3 flex items-center bg-transparent border-2 border-white text-white rounded-full font-semibold hover:bg-white hover:text-gray-900 transition duration-300 shadow-md"
                                 >
                                     Sign Out
                                 </button>
                             </>
                         ) : (
                             <Link href="/auth">
-                                <button className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition">
+                                <button className="px-6 py-3 flex items-center bg-blue-600 text-white rounded-full font-semibold hover:bg-blue-700 transition duration-300 shadow-md">
                                     Sign In
                                 </button>
                             </Link>
