@@ -62,9 +62,13 @@ const PollPage: NextPage<PollPageProps> = ({ params }) => {
             eventSource.onmessage = (event) => {
                 try {
                     const updatedPoll = JSON.parse(event.data);
-                    console.log(event.data);
                     setPollData((prev) =>
-                        prev ? { ...prev, poll: updatedPoll } : null
+                        prev
+                            ? {
+                                  ...updatedPoll,
+                                  user_vote: prev.user_vote,
+                              }
+                            : null
                     );
                 } catch (error) {
                     console.error("Error parsing SSE data:", error);
