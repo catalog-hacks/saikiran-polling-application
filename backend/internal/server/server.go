@@ -57,9 +57,9 @@ func NewServer() *http.Server {
     server := &http.Server{
         Addr:         fmt.Sprintf(":%d", NewServer.port),
         Handler:      corsMiddleware(NewServer.RegisterRoutes()), // Wrap the handler with CORS middleware
-        IdleTimeout:  time.Minute,
+        IdleTimeout:  5*time.Minute,
         ReadTimeout:  10 * time.Second,
-        WriteTimeout: 30 * time.Second,
+        WriteTimeout: 0,
     }
 
     return server
