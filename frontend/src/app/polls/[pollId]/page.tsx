@@ -77,11 +77,17 @@ const PollPage: NextPage<PollPageProps> = ({ params }) => {
     if (!poll || !Array.isArray(poll.options)) return <div>Loading...</div>;
 
     return (
-        <div>
-            <h1>{poll.question}</h1>
-            <ul>
+        <div className="max-w-xl mx-auto mt-8 p-6 bg-white shadow-lg rounded-lg">
+            <h1 className="text-2xl font-bold mb-6 text-gray-800">
+                {poll.question}
+            </h1>
+
+            <ul className="space-y-4">
                 {poll.options.map((option) => (
-                    <li key={option.id.toString()}>
+                    <li
+                        key={option.id.toString()}
+                        className="flex items-center"
+                    >
                         <input
                             type="checkbox"
                             id={option.id.toString()}
@@ -104,16 +110,29 @@ const PollPage: NextPage<PollPageProps> = ({ params }) => {
                                     );
                                 }
                             }}
+                            className="h-5 w-5 text-blue-500 border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
                         />
-                        <label htmlFor={option.id.toString()}>
-                            {option.text} ({option.count} votes)
+                        <label
+                            htmlFor={option.id.toString()}
+                            className="ml-3 text-gray-700 text-lg"
+                        >
+                            {option.text}{" "}
+                            <span className="text-sm text-gray-500">
+                                ({option.count} votes)
+                            </span>
                         </label>
                     </li>
                 ))}
             </ul>
+
             <button
                 onClick={handleVote}
                 disabled={selectedOptions.length === 0}
+                className={`mt-6 w-full py-2 px-4 rounded-md text-white ${
+                    selectedOptions.length === 0
+                        ? "bg-gray-400 cursor-not-allowed"
+                        : "bg-blue-500 hover:bg-blue-600"
+                }`}
             >
                 Vote
             </button>

@@ -29,16 +29,16 @@ const Navbar = () => {
 
                 <div className="hidden md:flex ml-6 space-x-6">
                     <Link
-                        href="#"
+                        href="/polls/new"
                         className="text-gray-700 hover:text-blue-500 dark:text-gray-300"
                     >
-                        Link 1
+                        Create
                     </Link>
                     <Link
                         href="#"
                         className="text-gray-700 hover:text-blue-500 dark:text-gray-300"
                     >
-                        Link 2
+                        View
                     </Link>
                 </div>
             </div>
