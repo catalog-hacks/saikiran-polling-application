@@ -6,8 +6,10 @@ import (
 	"net/http"
 	"sync"
 
+	"github.com/SaiKiranMatta/nextjs-golang-polling-application/backend/internal/vote"
 	"github.com/gorilla/mux"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type PollHandler struct {
@@ -51,22 +53,47 @@ func (h *PollHandler) CreatePoll(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(poll)
 }
 
-func (h *PollHandler) GetPoll(w http.ResponseWriter, r *http.Request) {
-	pollID, err := primitive.ObjectIDFromHex(mux.Vars(r)["id"])
-	if err != nil {
-		http.Error(w, "Invalid poll ID", http.StatusBadRequest)
-		return
-	}
 
-	poll, err := h.pollService.GetPoll(r.Context(), pollID)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	json.NewEncoder(w).Encode(poll)
+type PollWithUserVote struct {
+    *Poll
+    UserVote *vote.UserVoteResponse `json:"user_vote"`
 }
 
+func (h *PollHandler) GetPoll(w http.ResponseWriter, r *http.Request) {
+    pollID, err := primitive.ObjectIDFromHex(mux.Vars(r)["id"])
+    if err != nil {
+        http.Error(w, "Invalid poll ID", http.StatusBadRequest)
+        return
+    }
+
+    // Get user ID from query parameter
+    userIDStr := r.URL.Query().Get("userId")
+    userID, err := primitive.ObjectIDFromHex(userIDStr)
+    if err != nil {
+        http.Error(w, "Invalid user ID", http.StatusBadRequest)
+        return
+    }
+
+    poll, err := h.pollService.GetPoll(r.Context(), pollID)
+    if err != nil {
+        http.Error(w, err.Error(), http.StatusInternalServerError)
+        return
+    }
+
+    // Get user's vote
+    userVote, err := h.pollService.voteService.GetUserVote(r.Context(), pollID, userID)
+    if err != nil && err != mongo.ErrNoDocuments {
+        http.Error(w, err.Error(), http.StatusInternalServerError)
+        return
+    }
+
+    response := PollWithUserVote{
+        Poll:     poll,
+        UserVote: &userVote,
+    }
+
+    json.NewEncoder(w).Encode(response)
+}
 
 
 func (h *PollHandler) Vote(w http.ResponseWriter, r *http.Request) {
