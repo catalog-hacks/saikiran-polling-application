@@ -78,13 +78,6 @@ const PollPage: NextPage<PollPageProps> = ({ params }) => {
             eventSource.onerror = (error) => {
                 console.error("SSE error:", error);
                 console.log("SSE readyState:", eventSource);
-                // eventSource.close();
-
-                // setTimeout(() => {
-                //     console.log("Attempting to reconnect SSE...");
-                //     fetchPoll();
-                //     connectSSE();
-                // }, 5000);
             };
 
             return eventSource;
@@ -113,7 +106,7 @@ const PollPage: NextPage<PollPageProps> = ({ params }) => {
     }, [selectedOptions, initialVote]);
 
     const handleVote = async () => {
-        if (!session?.user?.email) return;
+        if (!session?.user?.email || !pollData?.active) return;
         try {
             const isVerified = await verifyPasskey(session?.user?.email);
             if (!isVerified) {
@@ -161,12 +154,23 @@ const PollPage: NextPage<PollPageProps> = ({ params }) => {
                 {pollData.question}
             </h1>
 
+            {!pollData.active && (
+                <div className="text-red-600 text-center font-bold text-lg mb-8">
+                    This poll is no longer active.
+                </div>
+            )}
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {/* Voting Section */}
-                <div className="bg-white shadow-lg rounded-lg p-6">
+                <div
+                    className={`bg-white shadow-lg rounded-lg p-6 ${
+                        !pollData.active ? "opacity-50" : ""
+                    }`}
+                >
                     <h2 className="text-xl font-semibold mb-4 text-gray-700">
                         Cast Your Vote
                     </h2>
+
                     <ul className="space-y-4">
                         {pollData.options.map((option) => (
                             <li
@@ -185,6 +189,7 @@ const PollPage: NextPage<PollPageProps> = ({ params }) => {
                                     checked={selectedOptions.includes(
                                         option.id.toString()
                                     )}
+                                    disabled={!pollData.active}
                                     onChange={(e) =>
                                         handleOptionChange(
                                             option.id.toString(),
@@ -205,9 +210,15 @@ const PollPage: NextPage<PollPageProps> = ({ params }) => {
 
                     <button
                         onClick={handleVote}
-                        disabled={selectedOptions.length === 0 || !voteChanged}
+                        disabled={
+                            !pollData.active ||
+                            selectedOptions.length === 0 ||
+                            !voteChanged
+                        }
                         className={`mt-6 w-full py-2 px-4 rounded-md text-white ${
-                            selectedOptions.length === 0 || !voteChanged
+                            selectedOptions.length === 0 ||
+                            !voteChanged ||
+                            !pollData.active
                                 ? "bg-gray-400 cursor-not-allowed"
                                 : "bg-blue-500 hover:bg-blue-600"
                         }`}
