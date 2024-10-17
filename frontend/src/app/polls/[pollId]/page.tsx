@@ -1,0 +1,124 @@
+"use client";
+
+import { Poll } from "@/types/poll";
+import { NextPage } from "next";
+import { useSession } from "next-auth/react";
+import { useEffect, useState } from "react";
+
+interface PollPageProps {
+    params: { pollId: string };
+}
+
+const PollPage: NextPage<PollPageProps> = ({ params }) => {
+    const { data: session, status } = useSession();
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
+    const [poll, setPoll] = useState<Poll | null>(null);
+    const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
+
+    const fetchPoll = async () => {
+        try {
+            const response = await fetch(`/api/polls/${params.pollId}`, {
+                method: "GET",
+            });
+            const data = await response.json();
+            setPoll(data.poll);
+        } catch (error) {
+            console.error("Error fetching poll:", error);
+        }
+    };
+
+    const setupSSE = () => {
+        const eventSource = new EventSource(
+            `${backendUrl}/polls/${params.pollId}/stream`
+        );
+
+        eventSource.onmessage = (event) => {
+            const updatedPoll = JSON.parse(event.data);
+            setPoll(updatedPoll);
+        };
+
+        eventSource.onerror = (error) => {
+            console.error("SSE error:", error);
+            eventSource.close();
+        };
+
+        return eventSource;
+    };
+
+    useEffect(() => {
+        if (params.pollId) {
+            fetchPoll();
+            const eventSource = setupSSE();
+            return () => {
+                eventSource.close();
+            };
+        }
+    }, [params.pollId]);
+
+    const handleVote = async () => {
+        try {
+            await fetch(`${backendUrl}/polls/${params.pollId}/vote`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    user_id: session?.user?.id,
+                    option_ids: selectedOptions,
+                }),
+            });
+            fetchPoll();
+        } catch (error) {
+            console.error("Error voting:", error);
+        }
+    };
+
+    // Check if poll is null or options is not an array
+    if (!poll || !Array.isArray(poll.options)) return <div>Loading...</div>;
+
+    return (
+        <div>
+            <h1>{poll.question}</h1>
+            <ul>
+                {poll.options.map((option) => (
+                    <li key={option.id.toString()}>
+                        <input
+                            type="checkbox"
+                            id={option.id.toString()}
+                            name="poll-option"
+                            value={option.id.toString()}
+                            checked={selectedOptions.includes(
+                                option.id.toString()
+                            )}
+                            onChange={(e) => {
+                                if (e.target.checked) {
+                                    setSelectedOptions([
+                                        ...selectedOptions,
+                                        option.id.toString(),
+                                    ]);
+                                } else {
+                                    setSelectedOptions(
+                                        selectedOptions.filter(
+                                            (id) => id !== option.id.toString()
+                                        )
+                                    );
+                                }
+                            }}
+                        />
+                        <label htmlFor={option.id.toString()}>
+                            {option.text} ({option.count} votes)
+                        </label>
+                    </li>
+                ))}
+            </ul>
+            <button
+                onClick={handleVote}
+                disabled={selectedOptions.length === 0}
+            >
+                Vote
+            </button>
+        </div>
+    );
+};
+
+export default PollPage;
