@@ -35,6 +35,7 @@ func (s *VoteService) AddVote(ctx context.Context, pollID, userID primitive.Obje
 
 	// Create and insert the vote
 	vote := &Vote{
+		PollID: pollID,
 		UserID:    userID,
 		OptionIDs: optionIDs,
 		VotedAt:   time.Now(),
@@ -46,6 +47,29 @@ func (s *VoteService) AddVote(ctx context.Context, pollID, userID primitive.Obje
 	}
 
 	return nil
+}
+
+type UserVoteResponse struct {
+	OptionIDs []primitive.ObjectID `json:"option_ids"`
+}
+
+
+func (s *VoteService) GetUserVote(ctx context.Context, pollID, userID primitive.ObjectID) (UserVoteResponse, error) {
+	// Find the vote document for the given user and poll
+	var vote Vote
+	err := s.voteCollection.FindOne(ctx, bson.M{
+		"poll_id": pollID,
+		"user_id": userID,
+	}).Decode(&vote)
+
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return UserVoteResponse{}, errors.New("no vote found for user in this poll")
+		}
+		return UserVoteResponse{}, err
+	}
+
+	return UserVoteResponse{OptionIDs: vote.OptionIDs}, nil
 }
 
 func (s *VoteService) GetVotesForPoll(ctx context.Context, pollID primitive.ObjectID) ([]Vote, error) {
