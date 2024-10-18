@@ -133,7 +133,7 @@ const PollPage: NextPage<PollPageProps> = ({ params }) => {
         return <div>Loading...</div>;
 
     const handleOptionChange = (optionId: string, isChecked: boolean) => {
-        if (pollData?.multipleChoices) {
+        if (pollData?.multiple_choices) {
             // Handle as checkboxes (multiple choices allowed)
             if (isChecked) {
                 setSelectedOptions([...selectedOptions, optionId]);
@@ -179,7 +179,7 @@ const PollPage: NextPage<PollPageProps> = ({ params }) => {
                             >
                                 <input
                                     type={
-                                        pollData?.multipleChoices
+                                        pollData?.multiple_choices
                                             ? "checkbox"
                                             : "radio"
                                     }
