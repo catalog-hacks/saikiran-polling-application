@@ -14,7 +14,7 @@ const PollItem = ({ poll }: { poll: Poll }) => {
     };
 
     return (
-        <div className="p-4 bg-gray-100 rounded-md shadow">
+        <div className="p-4 bg-white rounded-md shadow">
             <Link href={shareUrl}>
                 <h2 className="text-lg font-semibold text-gray-800 hover:text-blue-700 duration-300">
                     {poll.question}
@@ -28,11 +28,26 @@ const PollItem = ({ poll }: { poll: Poll }) => {
                 )}
             </p>
 
-            <div className="mt-4 flex justify-end space-x-4">
-                <ShareButton shareUrl={shareUrl} />
-                <button className="bg-blue-500 text-white py-2 w-36 px-4 rounded-md hover:bg-blue-600">
-                    Manage Poll
-                </button>
+            <div className="mt-4 flex justify-between space-x-4 items-center">
+                <span
+                    className={`${
+                        poll.active ? "text-green-600" : "text-red-600"
+                    } text-sm `}
+                >
+                    Status: {poll.active ? "active" : "inactive"}
+                </span>
+                <div className=" flex space-x-4">
+                    <ShareButton shareUrl={shareUrl} />
+                    <button
+                        className={`${
+                            poll.active
+                                ? "bg-red-700 hover:bg-red-500"
+                                : "bg-blue-800 hover:bg-blue-700"
+                        } text-white py-2 w-36 px-4 rounded-md `}
+                    >
+                        {poll.active ? "Disable" : "Enable"}
+                    </button>
+                </div>
             </div>
         </div>
     );

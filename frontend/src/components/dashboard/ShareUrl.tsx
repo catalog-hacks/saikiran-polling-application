@@ -15,8 +15,9 @@ const ShareButton = ({ shareUrl }: { shareUrl: string }) => {
 
     return (
         <button
-            className="bg-green-500 text-white py-2 px-4 rounded-md w-36 hover:bg-green-600 focus:outline-none"
+            className="bg-green-600 text-white py-2 px-4 rounded-md w-36 hover:bg-green-500 focus:outline-none"
             onClick={handleCopy}
+            type="button"
             aria-label={isCopied ? "Link copied!" : "Share poll"}
         >
             {isCopied ? "Link Copied!" : "Share Poll"}
