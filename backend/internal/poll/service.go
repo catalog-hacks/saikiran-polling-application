@@ -77,6 +77,21 @@ func (s *PollService) GetPoll(ctx context.Context, pollID primitive.ObjectID) (*
 	return &poll, nil
 }
 
+func (s *PollService) GetPollsByUser(ctx context.Context, userID primitive.ObjectID) ([]Poll, error) {
+    var polls []Poll
+    filter := bson.M{"created_by": userID}
+    cursor, err := s.pollCollection.Find(ctx, filter)
+    if err != nil {
+        return nil, err
+    }
+    defer cursor.Close(ctx)
+
+    if err := cursor.All(ctx, &polls); err != nil {
+        return nil, err
+    }
+    return polls, nil
+}
+
 func (s *PollService) Vote(ctx context.Context, pollID, userID primitive.ObjectID, optionIDs []primitive.ObjectID) error {
 	poll, err := s.GetPoll(ctx, pollID)
 	if err != nil {
