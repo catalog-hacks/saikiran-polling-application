@@ -17,7 +17,7 @@ const Navbar = () => {
 
     return (
         <nav
-            className={`fixed top-0 left-0 w-full h-20 z-50 flex justify-between items-center p-4 transition-all duration-300 ${"bg-white shadow-md dark:bg-zinc-900"}`}
+            className={`fixed top-0 left-0 w-full h-20 z-50 flex justify-between items-center p-4 transition-all duration-300 ${"bg-white shadow-md dark:bg-gray-900"}`}
         >
             <div className="flex items-center">
                 <Link
@@ -26,21 +26,22 @@ const Navbar = () => {
                 >
                     PollingApp
                 </Link>
-
-                <div className="hidden md:flex ml-6 space-x-6">
-                    <Link
-                        href="/create"
-                        className="text-gray-700 hover:text-blue-500 dark:text-gray-300"
-                    >
-                        Create
-                    </Link>
-                    <Link
-                        href="/mypolls"
-                        className="text-gray-700 hover:text-blue-500 dark:text-gray-300"
-                    >
-                        Dashboard
-                    </Link>
-                </div>
+                {status === "authenticated" && (
+                    <div className="hidden md:flex ml-6 space-x-6">
+                        <Link
+                            href="/create"
+                            className="text-gray-700 hover:text-blue-500 dark:text-gray-300"
+                        >
+                            Create
+                        </Link>
+                        <Link
+                            href="/mypolls"
+                            className="text-gray-700 hover:text-blue-500 dark:text-gray-300"
+                        >
+                            Dashboard
+                        </Link>
+                    </div>
+                )}
             </div>
 
             <div className="flex items-center space-x-4">
@@ -57,7 +58,7 @@ const Navbar = () => {
                             </>
                         ) : (
                             <Link href="/auth">
-                                <button className="px-6 py-3 flex items-center bg-blue-600 text-white rounded-full font-semibold hover:bg-blue-700 transition duration-300 shadow-md">
+                                <button className="px-6 py-3 flex items-center bg-blue-800 text-white rounded-full font-semibold hover:bg-blue-700 transition duration-300 shadow-md">
                                     Sign In
                                 </button>
                             </Link>
