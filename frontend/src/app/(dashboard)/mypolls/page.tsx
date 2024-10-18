@@ -47,7 +47,11 @@ const UserPolls = () => {
             ) : (
                 <div className="space-y-6">
                     {polls.map((poll) => (
-                        <PollItem key={poll.id.toString()} poll={poll} />
+                        <PollItem
+                            key={poll.id.toString()}
+                            poll={poll}
+                            email={email as string}
+                        />
                     ))}
                 </div>
             )}

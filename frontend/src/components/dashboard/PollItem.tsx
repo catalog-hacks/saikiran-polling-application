@@ -1,16 +1,44 @@
+"use client";
+
 import { Poll } from "@/types/poll";
 import ShareButton from "./ShareUrl";
 import Link from "next/link";
+import { useState } from "react";
+import { usePasskeyAuth } from "@/hooks/usePasskeyAuth";
 
-const PollItem = ({ poll }: { poll: Poll }) => {
+const PollItem = ({ poll, email }: { poll: Poll; email: string }) => {
+    const [isActive, setIsActive] = useState(poll.active);
     const frontendUrl =
         process.env.NEXT_PUBLIC_FRONTEND_URL || "http://localhost:3000";
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
     const shareUrl = `${frontendUrl}/polls/${poll.id}`;
+    const { verifyPasskey } = usePasskeyAuth();
 
     const dateOptions: Intl.DateTimeFormatOptions = {
         formatMatcher: "best fit",
         dateStyle: "full",
         timeZone: "IST",
+    };
+
+    const togglePollStatus = async () => {
+        const newStatus = !isActive;
+        const isVerified = await verifyPasskey(email);
+        if (!isVerified) {
+            return;
+        }
+        const response = await fetch(`${backendUrl}/polls/${poll.id}/status`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ active: newStatus }),
+        });
+
+        if (response.ok) {
+            setIsActive(newStatus);
+        } else {
+            console.error("Failed to update poll status");
+        }
     };
 
     return (
@@ -31,21 +59,22 @@ const PollItem = ({ poll }: { poll: Poll }) => {
             <div className="mt-4 flex justify-between space-x-4 items-center">
                 <span
                     className={`${
-                        poll.active ? "text-green-600" : "text-red-600"
+                        isActive ? "text-green-600" : "text-red-600"
                     } text-sm `}
                 >
-                    Status: {poll.active ? "active" : "inactive"}
+                    Status: {isActive ? "active" : "inactive"}
                 </span>
                 <div className=" flex space-x-4">
                     <ShareButton shareUrl={shareUrl} />
                     <button
+                        onClick={togglePollStatus}
                         className={`${
-                            poll.active
+                            isActive
                                 ? "bg-red-700 hover:bg-red-500"
                                 : "bg-blue-800 hover:bg-blue-700"
                         } text-white py-2 w-36 px-4 rounded-md `}
                     >
-                        {poll.active ? "Disable" : "Enable"}
+                        {isActive ? "Disable" : "Enable"}
                     </button>
                 </div>
             </div>
