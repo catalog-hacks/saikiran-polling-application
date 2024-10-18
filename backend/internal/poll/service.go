@@ -146,3 +146,24 @@ func (s *PollService) Vote(ctx context.Context, pollID, userID primitive.ObjectI
 
 	return nil
 }
+
+func (s *PollService) UpdatePollStatus(ctx context.Context, pollID primitive.ObjectID, active bool) error {
+    filter := bson.M{"_id": pollID}
+    update := bson.M{
+        "$set": bson.M{
+            "active": active,
+        },
+    }
+
+    // Update the poll in the database
+    result, err := s.pollCollection.UpdateOne(ctx, filter, update)
+    if err != nil {
+        return err
+    }
+
+    if result.MatchedCount == 0 {
+        return errors.New("poll not found")
+    }
+
+    return nil
+}
