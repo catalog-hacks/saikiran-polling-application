@@ -2,10 +2,9 @@ import { NextResponse } from "next/server";
 
 export const POST = async (request: Request) => {
     const { name, email } = await request.json();
+    const backendUrl = process.env.BACKEND_URL;
 
-    console.log("Registration begin Proxy API called");
-
-    const response = await fetch("http://localhost:8080/register/begin", {
+    const response = await fetch(`${backendUrl}/register/begin`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, email }),

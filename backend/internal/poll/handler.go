@@ -3,11 +3,15 @@ package poll
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"sync"
+	"time"
 
+	"github.com/SaiKiranMatta/nextjs-golang-polling-application/backend/internal/vote"
 	"github.com/gorilla/mux"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type PollHandler struct {
@@ -51,22 +55,47 @@ func (h *PollHandler) CreatePoll(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(poll)
 }
 
-func (h *PollHandler) GetPoll(w http.ResponseWriter, r *http.Request) {
-	pollID, err := primitive.ObjectIDFromHex(mux.Vars(r)["id"])
-	if err != nil {
-		http.Error(w, "Invalid poll ID", http.StatusBadRequest)
-		return
-	}
 
-	poll, err := h.pollService.GetPoll(r.Context(), pollID)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	json.NewEncoder(w).Encode(poll)
+type PollWithUserVote struct {
+    *Poll
+    UserVote *vote.UserVoteResponse `json:"user_vote"`
 }
 
+func (h *PollHandler) GetPoll(w http.ResponseWriter, r *http.Request) {
+    pollID, err := primitive.ObjectIDFromHex(mux.Vars(r)["id"])
+    if err != nil {
+        http.Error(w, "Invalid poll ID", http.StatusBadRequest)
+        return
+    }
+
+    // Get user ID from query parameter
+    userIDStr := r.URL.Query().Get("userId")
+    userID, err := primitive.ObjectIDFromHex(userIDStr)
+    if err != nil {
+        http.Error(w, "Invalid user ID", http.StatusBadRequest)
+        return
+    }
+
+    poll, err := h.pollService.GetPoll(r.Context(), pollID)
+    if err != nil {
+        http.Error(w, err.Error(), http.StatusInternalServerError)
+        return
+    }
+
+    // Get user's vote
+    userVote, err := h.pollService.voteService.GetUserVote(r.Context(), pollID, userID)
+    if err != nil && err != mongo.ErrNoDocuments {
+        http.Error(w, err.Error(), http.StatusInternalServerError)
+        return
+    }
+
+    response := PollWithUserVote{
+        Poll:     poll,
+        UserVote: &userVote,
+    }
+
+    json.NewEncoder(w).Encode(response)
+}
 
 
 func (h *PollHandler) Vote(w http.ResponseWriter, r *http.Request) {
@@ -121,63 +150,102 @@ func (h *PollHandler) Vote(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *PollHandler) StreamPollUpdates(w http.ResponseWriter, r *http.Request) {
-	pollID := mux.Vars(r)["id"]
+    pollID := mux.Vars(r)["id"]
 
-	// Set headers for SSE
-	w.Header().Set("Content-Type", "text/event-stream")
-	w.Header().Set("Cache-Control", "no-cache")
-	w.Header().Set("Connection", "keep-alive")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
+    // Set headers for SSE
+    w.Header().Set("Content-Type", "text/event-stream")
+    w.Header().Set("Cache-Control", "no-cache")
+    w.Header().Set("Connection", "keep-alive")
+    w.Header().Set("Access-Control-Allow-Origin", "*")
+    w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 
-	// Create a channel for this client
-	updateChan := make(chan *Poll)
+    flusher, ok := w.(http.Flusher)
+    if !ok {
+        http.Error(w, "Streaming unsupported!", http.StatusInternalServerError)
+        return
+    }
 
-	// Register the client
-	h.mutex.Lock()
-	if _, ok := h.clients[pollID]; !ok {
-		h.clients[pollID] = make(map[chan *Poll]bool)
-	}
-	h.clients[pollID][updateChan] = true
-	h.mutex.Unlock()
+    // Create a channel for this client with a buffer
+    updateChan := make(chan *Poll, 10)
 
-	// Unregister the client when the connection is closed
-	defer func() {
-		h.mutex.Lock()
-		delete(h.clients[pollID], updateChan)
-		if len(h.clients[pollID]) == 0 {
-			delete(h.clients, pollID)
-		}
-		h.mutex.Unlock()
-	}()
+    // Register the client
+    h.mutex.Lock()
+    if _, ok := h.clients[pollID]; !ok {
+        h.clients[pollID] = make(map[chan *Poll]bool)
+    }
+    h.clients[pollID][updateChan] = true
+    h.mutex.Unlock()
 
-	// Stream updates to the client
-	for {
-		select {
-		case poll := <-updateChan:
-			data, err := json.Marshal(poll)
-			if err != nil {
-				fmt.Fprintf(w, "event: error\ndata: %s\n\n", err.Error())
-				return
-			}
-			fmt.Fprintf(w, "data: %s\n\n", data)
-			w.(http.Flusher).Flush()
-		case <-r.Context().Done():
-			return
-		}
-	}
+    // Create keep-alive ticker
+    ticker := time.NewTicker(15 * time.Second)
+    defer ticker.Stop()
+
+    // Clean up on connection close
+    go func() {
+        <-r.Context().Done()
+        ticker.Stop()
+        h.mutex.Lock()
+        delete(h.clients[pollID], updateChan)
+        if len(h.clients[pollID]) == 0 {
+            delete(h.clients, pollID)
+        }
+        h.mutex.Unlock()
+        close(updateChan)
+    }()
+
+    // Send initial connection message
+    fmt.Fprintf(w, "data: {\"status\": \"connected\"}\n\n")
+    flusher.Flush()
+
+    // Stream updates to the client
+    for {
+        select {
+        case poll, ok := <-updateChan:
+            if !ok {
+                return
+            }
+            
+            data, err := json.Marshal(poll)
+            if err != nil {
+                fmt.Fprintf(w, "event: error\ndata: %s\n\n", err.Error())
+                flusher.Flush()
+                return
+            }
+
+            _, err = fmt.Fprintf(w, "data: %s\n\n", data)
+            if err != nil {
+                return
+            }
+            flusher.Flush()
+
+        case <-ticker.C:
+            // Send keep-alive message
+            _, err := fmt.Fprintf(w, ": keepalive\n\n")
+            if err != nil {
+                log.Printf("Error sending keepalive: %v", err)
+                return
+            }
+            flusher.Flush()
+
+        case <-r.Context().Done():
+            return
+        }
+    }
 }
 
 func (h *PollHandler) notifyClients(pollID string, poll *Poll) {
-	h.mutex.RLock()
-	defer h.mutex.RUnlock()
+    h.mutex.RLock()
+    defer h.mutex.RUnlock()
 
-	if clients, ok := h.clients[pollID]; ok {
-		for clientChan := range clients {
-			select {
-			case clientChan <- poll:
-			default:
-				// If the channel is full, we skip this client
-			}
-		}
-	}
+    if clients, ok := h.clients[pollID]; ok {
+        for clientChan := range clients {
+            select {
+            case clientChan <- poll:
+                // Successfully sent
+            default:
+                // Channel is full, log it
+                log.Printf("Warning: Client channel for poll %s is full, skipping update", pollID)
+            }
+        }
+    }
 }
