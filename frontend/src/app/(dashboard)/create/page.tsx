@@ -2,7 +2,6 @@
 
 import CreatePollForm from "@/components/CreatePoll";
 import { NextPage } from "next";
-import ProtectedRoute from "@/components/ProtectedRoute";
 import { useSessionStore } from "@/store/useSessionStore";
 import { useShallow } from "zustand/shallow";
 
@@ -12,13 +11,11 @@ const CreatePollPage: NextPage = () => {
     );
 
     return (
-        <ProtectedRoute>
-            <div className="pt-8">
-                {user_id && email && (
-                    <CreatePollForm user_id={user_id} email={email} />
-                )}
-            </div>
-        </ProtectedRoute>
+        <div className="pt-8">
+            {user_id && email && (
+                <CreatePollForm user_id={user_id} email={email} />
+            )}
+        </div>
     );
 };
 

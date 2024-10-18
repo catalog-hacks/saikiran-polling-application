@@ -17,7 +17,7 @@ const Page: NextPage<Props> = ({}) => {
                 </p>
                 <div className="flex justify-center space-x-4">
                     <Link
-                        href="/polls/new"
+                        href="/create"
                         className="px-6 py-3 flex items-center bg-blue-600 text-white rounded-full font-semibold hover:bg-blue-700 transition duration-300 shadow-md"
                     >
                         Create Poll
