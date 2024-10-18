@@ -27,7 +27,7 @@ export default function AuthPage() {
         <>
             {!loading && (
                 <div className=" flex items-center justify-center min-h-[calc(100vh_-_80px)]">
-                    <div className="max-w-md w-full  shadow-md rounded-lg p-8">
+                    <div className="max-w-md w-full  shadow-md bg-white rounded-lg p-8">
                         {isRegistering ? <RegisterForm /> : <LoginForm />}
 
                         <button

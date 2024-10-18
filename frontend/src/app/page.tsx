@@ -17,13 +17,13 @@ const Page: NextPage<Props> = ({}) => {
                 </p>
                 <div className="flex justify-center space-x-4">
                     <Link
-                        href="/polls/new"
+                        href="/create"
                         className="px-6 py-3 flex items-center bg-blue-600 text-white rounded-full font-semibold hover:bg-blue-700 transition duration-300 shadow-md"
                     >
                         Create Poll
                     </Link>
                     <Link
-                        href="/view-polls"
+                        href="/mypolls"
                         className="px-6 py-3 flex items-center bg-transparent border-2 border-white text-white rounded-full font-semibold hover:bg-white hover:text-gray-900 transition duration-300 shadow-md"
                     >
                         View Polls

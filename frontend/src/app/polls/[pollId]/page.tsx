@@ -133,7 +133,7 @@ const PollPage: NextPage<PollPageProps> = ({ params }) => {
         return <div>Loading...</div>;
 
     const handleOptionChange = (optionId: string, isChecked: boolean) => {
-        if (pollData?.multipleChoices) {
+        if (pollData?.multiple_choices) {
             // Handle as checkboxes (multiple choices allowed)
             if (isChecked) {
                 setSelectedOptions([...selectedOptions, optionId]);
@@ -149,7 +149,7 @@ const PollPage: NextPage<PollPageProps> = ({ params }) => {
     };
 
     return (
-        <div className="max-w-4xl mx-auto mt-8 p-6">
+        <div className="max-w-4xl mx-auto pt-16 p-6 ">
             <h1 className="text-3xl font-bold mb-8 text-center text-gray-800">
                 {pollData.question}
             </h1>
@@ -179,7 +179,7 @@ const PollPage: NextPage<PollPageProps> = ({ params }) => {
                             >
                                 <input
                                     type={
-                                        pollData?.multipleChoices
+                                        pollData?.multiple_choices
                                             ? "checkbox"
                                             : "radio"
                                     }
@@ -196,7 +196,7 @@ const PollPage: NextPage<PollPageProps> = ({ params }) => {
                                             e.target.checked
                                         )
                                     }
-                                    className="h-5 w-5 text-blue-500 border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+                                    className="h-5 w-5 text-blue-800 border-gray-300 rounded focus:ring-2 focus:ring-blue-800"
                                 />
                                 <label
                                     htmlFor={option.id.toString()}
@@ -220,7 +220,7 @@ const PollPage: NextPage<PollPageProps> = ({ params }) => {
                             !voteChanged ||
                             !pollData.active
                                 ? "bg-gray-400 cursor-not-allowed"
-                                : "bg-blue-500 hover:bg-blue-600"
+                                : "bg-blue-800 hover:bg-blue-700"
                         }`}
                     >
                         {voteChanged && initialVote.length !== 0
@@ -232,7 +232,7 @@ const PollPage: NextPage<PollPageProps> = ({ params }) => {
                 {/* Results Section */}
                 <div className="bg-white shadow-lg rounded-lg p-6">
                     <h2 className="text-xl font-semibold mb-4 text-gray-700">
-                        Live Results
+                        {pollData.active ? "Live " : " "}Results
                     </h2>
                     <div className="space-y-4">
                         {pollData.options.map((option) => {
@@ -259,7 +259,7 @@ const PollPage: NextPage<PollPageProps> = ({ params }) => {
                                     </div>
                                     <div className="w-full bg-gray-200 rounded-full h-2.5">
                                         <div
-                                            className="bg-blue-500 h-2.5 rounded-full"
+                                            className="bg-blue-800 h-2.5 rounded-full"
                                             style={{ width: `${percentage}%` }}
                                         ></div>
                                     </div>

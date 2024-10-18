@@ -16,7 +16,7 @@ export function RegisterForm() {
     return (
         <form
             onSubmit={handleSubmit}
-            className="max-w-md mx-auto mt-10 p-6 bg-secondary shadow-md rounded-lg"
+            className="max-w-md mx-auto mt-10 p-6 bg-white border border-gray-100 shadow-md rounded-lg"
         >
             <h2 className="text-2xl font-semibold mb-6 text-center">
                 Register
@@ -28,7 +28,7 @@ export function RegisterForm() {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Email"
                 required
-                className="w-full p-3 mb-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full p-3 mb-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-800"
             />
 
             <input
@@ -37,12 +37,12 @@ export function RegisterForm() {
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Name"
                 required
-                className="w-full p-3 mb-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full p-3 mb-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-900"
             />
 
             <button
                 type="submit"
-                className="w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition duration-300"
+                className="w-full bg-blue-800 text-white py-2 rounded-lg hover:bg-blue-700 transition duration-300"
             >
                 Register
             </button>

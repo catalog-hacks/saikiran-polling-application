@@ -77,6 +77,21 @@ func (s *PollService) GetPoll(ctx context.Context, pollID primitive.ObjectID) (*
 	return &poll, nil
 }
 
+func (s *PollService) GetPollsByUser(ctx context.Context, userID primitive.ObjectID) ([]Poll, error) {
+    var polls []Poll
+    filter := bson.M{"created_by": userID}
+    cursor, err := s.pollCollection.Find(ctx, filter)
+    if err != nil {
+        return nil, err
+    }
+    defer cursor.Close(ctx)
+
+    if err := cursor.All(ctx, &polls); err != nil {
+        return nil, err
+    }
+    return polls, nil
+}
+
 func (s *PollService) Vote(ctx context.Context, pollID, userID primitive.ObjectID, optionIDs []primitive.ObjectID) error {
 	poll, err := s.GetPoll(ctx, pollID)
 	if err != nil {
@@ -130,4 +145,25 @@ func (s *PollService) Vote(ctx context.Context, pollID, userID primitive.ObjectI
 	}
 
 	return nil
+}
+
+func (s *PollService) UpdatePollStatus(ctx context.Context, pollID primitive.ObjectID, active bool) error {
+    filter := bson.M{"_id": pollID}
+    update := bson.M{
+        "$set": bson.M{
+            "active": active,
+        },
+    }
+
+    // Update the poll in the database
+    result, err := s.pollCollection.UpdateOne(ctx, filter, update)
+    if err != nil {
+        return err
+    }
+
+    if result.MatchedCount == 0 {
+        return errors.New("poll not found")
+    }
+
+    return nil
 }

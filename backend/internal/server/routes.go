@@ -32,8 +32,9 @@ func (s *Server) RegisterRoutes() http.Handler {
 	mux.HandleFunc("/polls", pollHandler.CreatePoll).Methods("POST")
 	mux.HandleFunc("/polls/{id}/vote", pollHandler.Vote).Methods("POST")
 	mux.HandleFunc("/polls/{id}/stream", pollHandler.StreamPollUpdates).Methods("GET")
+	mux.HandleFunc("/userpolls", pollHandler.GetPollsByUser).Methods("GET")
+	mux.HandleFunc("/polls/{id}/status", pollHandler.TogglePollStatus).Methods("PUT")
 
-	
 	return mux
 }
 
