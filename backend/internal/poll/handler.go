@@ -97,6 +97,28 @@ func (h *PollHandler) GetPoll(w http.ResponseWriter, r *http.Request) {
     json.NewEncoder(w).Encode(response)
 }
 
+func (h *PollHandler) GetPollsByUser(w http.ResponseWriter, r *http.Request) {
+    userIDStr := r.URL.Query().Get("userId")
+    if userIDStr == "" {
+        http.Error(w, "User ID is required", http.StatusBadRequest)
+        return
+    }
+
+    userID, err := primitive.ObjectIDFromHex(userIDStr)
+    if err != nil {
+        http.Error(w, "Invalid user ID", http.StatusBadRequest)
+        return
+    }
+
+    polls, err := h.pollService.GetPollsByUser(r.Context(), userID)
+    if err != nil {
+        http.Error(w, err.Error(), http.StatusInternalServerError)
+        return
+    }
+
+    json.NewEncoder(w).Encode(polls)
+}
+
 
 func (h *PollHandler) Vote(w http.ResponseWriter, r *http.Request) {
 	var req struct {
