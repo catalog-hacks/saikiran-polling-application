@@ -35,7 +35,7 @@ const Navbar = () => {
                         Create
                     </Link>
                     <Link
-                        href="#"
+                        href="/mypolls"
                         className="text-gray-700 hover:text-blue-500 dark:text-gray-300"
                     >
                         Dashboard

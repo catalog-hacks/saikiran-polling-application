@@ -4,7 +4,7 @@ import React, { useState } from "react";
 interface PollFormData {
     question: string;
     options: string[];
-    multiple_choice: boolean;
+    multiple_choices: boolean;
 }
 
 interface CreatePollFormProps {
@@ -16,7 +16,7 @@ const CreatePollForm: React.FC<CreatePollFormProps> = ({ user_id, email }) => {
     const [pollData, setPollData] = useState<PollFormData>({
         question: "",
         options: ["", ""], // Starting with two options as default
-        multiple_choice: false,
+        multiple_choices: false,
     });
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);
@@ -95,7 +95,7 @@ const CreatePollForm: React.FC<CreatePollFormProps> = ({ user_id, email }) => {
                 setPollData({
                     question: "",
                     options: ["", ""],
-                    multiple_choice: false,
+                    multiple_choices: false,
                 }); // Reset the form
             } else {
                 setError(data.message || "Failed to create poll.");
@@ -166,11 +166,11 @@ const CreatePollForm: React.FC<CreatePollFormProps> = ({ user_id, email }) => {
                         <input
                             type="checkbox"
                             name="multiple_choice"
-                            checked={pollData.multiple_choice}
+                            checked={pollData.multiple_choices}
                             onChange={(e) =>
                                 setPollData((prev) => ({
                                     ...prev,
-                                    multiple_choice: e.target.checked,
+                                    multiple_choices: e.target.checked,
                                 }))
                             }
                             className="h-4 w-4 text-blue-500 border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
