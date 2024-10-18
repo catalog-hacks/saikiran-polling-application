@@ -6,10 +6,10 @@ export interface Poll {
     id: ObjectId;
     question: string;
     options: Option[];
-    createdBy: ObjectId;
-    createdAt: Date;
+    created_by: ObjectId;
+    created_at: Date;
     votes: Vote[];
-    multipleChoices: boolean;
+    multiple_choices: boolean;
     active: boolean;
 }
 
