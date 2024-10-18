@@ -32,7 +32,9 @@ export default function RootLayout({
             >
                 <SessionProvider>
                     <Navbar />
-                    <div className="pt-20">{children}</div>
+                    <div className="mt-20 bg-gray-100 min-h-[calc(100vh_-_80px)]">
+                        {children}
+                    </div>
                 </SessionProvider>
             </body>
         </html>
