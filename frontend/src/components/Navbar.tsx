@@ -29,7 +29,7 @@ const Navbar = () => {
 
                 <div className="hidden md:flex ml-6 space-x-6">
                     <Link
-                        href="/polls/new"
+                        href="/create"
                         className="text-gray-700 hover:text-blue-500 dark:text-gray-300"
                     >
                         Create
