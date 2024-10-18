@@ -271,3 +271,47 @@ func (h *PollHandler) notifyClients(pollID string, poll *Poll) {
         }
     }
 }
+
+
+type PollStatusUpdateRequest struct {
+    Active bool `json:"active"` // The new status (true for enable, false for disable)
+}
+
+// TogglePollStatus handles enabling/disabling a poll
+func (h *PollHandler) TogglePollStatus(w http.ResponseWriter, r *http.Request) {
+    // Get poll ID from the URL parameters
+    pollID, err := primitive.ObjectIDFromHex(mux.Vars(r)["id"])
+    if err != nil {
+        http.Error(w, "Invalid poll ID", http.StatusBadRequest)
+        return
+    }
+
+    // Parse the request body to get the new status
+    var req PollStatusUpdateRequest
+    if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+        http.Error(w, err.Error(), http.StatusBadRequest)
+        return
+    }
+
+    // Call the poll service to update the poll status
+    err = h.pollService.UpdatePollStatus(r.Context(), pollID, req.Active)
+    if err != nil {
+        http.Error(w, err.Error(), http.StatusInternalServerError)
+        return
+    }
+
+    updatedPoll, err := h.pollService.GetPoll(r.Context(), pollID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Notify all clients subscribed to this poll
+	h.notifyClients(pollID.Hex(), updatedPoll)
+
+    // Respond with a success message
+    w.WriteHeader(http.StatusOK)
+    json.NewEncoder(w).Encode(map[string]string{
+        "message": "Poll status updated successfully",
+    })
+}
