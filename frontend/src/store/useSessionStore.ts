@@ -26,7 +26,6 @@ export const useSessionStore = create<SessionState>((set) => ({
     checkSession: async () => {
         try {
             const session = await getSession();
-            console.log(session);
             if (session?.user) {
                 set({
                     user_id: session.user.id || null,
