@@ -232,7 +232,7 @@ const PollPage: NextPage<PollPageProps> = ({ params }) => {
                 {/* Results Section */}
                 <div className="bg-white shadow-lg rounded-lg p-6">
                     <h2 className="text-xl font-semibold mb-4 text-gray-700">
-                        Live Results
+                        {pollData.active ? "Live" : ""}Results
                     </h2>
                     <div className="space-y-4">
                         {pollData.options.map((option) => {
