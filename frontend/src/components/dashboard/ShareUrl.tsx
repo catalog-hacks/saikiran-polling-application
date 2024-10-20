@@ -1,6 +1,13 @@
+import { cn } from "@/utils/cn";
 import React, { useState } from "react";
 
-const ShareButton = ({ shareUrl }: { shareUrl: string }) => {
+const ShareButton = ({
+    shareUrl,
+    className,
+}: {
+    shareUrl: string;
+    className?: string;
+}) => {
     const [isCopied, setIsCopied] = useState(false);
 
     const handleCopy = async () => {
@@ -15,7 +22,10 @@ const ShareButton = ({ shareUrl }: { shareUrl: string }) => {
 
     return (
         <button
-            className="bg-green-600 text-white py-2 px-4 rounded-md w-36 hover:bg-green-500 focus:outline-none"
+            className={cn(
+                `bg-green-600 text-white py-2 px-4 rounded-md w-36 hover:bg-green-500 focus:outline-none`,
+                className
+            )}
             onClick={handleCopy}
             type="button"
             aria-label={isCopied ? "Link copied!" : "Share poll"}
