@@ -2,13 +2,14 @@
 
 import { LoginForm } from "@/components/LoginForm";
 import { RegisterForm } from "@/components/RegisterForm";
-import { useSession } from "next-auth/react";
+import { useSessionStore } from "@/store/useSessionStore";
 import { redirect } from "next/navigation";
 import { useEffect, useState } from "react";
+import { useShallow } from "zustand/shallow";
 
 export default function AuthPage() {
     const [isRegistering, setIsRegistering] = useState(false);
-    const { data: session, status } = useSession();
+    const [status] = useSessionStore(useShallow((state) => [state.status]));
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
