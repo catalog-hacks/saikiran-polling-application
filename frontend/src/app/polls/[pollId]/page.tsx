@@ -1,10 +1,24 @@
 "use client";
 
+import ShareButton from "@/components/dashboard/ShareUrl";
 import { usePasskeyAuth } from "@/hooks/usePasskeyAuth";
+import { useSessionStore } from "@/store/useSessionStore";
 import { Poll } from "@/types/poll";
 import { NextPage } from "next";
-import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
+import {
+    BarChart,
+    Bar,
+    PieChart,
+    Pie,
+    Cell,
+    XAxis,
+    YAxis,
+    Tooltip,
+    Legend,
+    ResponsiveContainer,
+} from "recharts";
+import { useShallow } from "zustand/shallow";
 
 interface UserVote {
     option_ids: string[];
@@ -19,27 +33,39 @@ interface PollPageProps {
 }
 
 const PollPage: NextPage<PollPageProps> = ({ params }) => {
-    const { data: session, status } = useSession();
+    const [user_id, email, checkSession] = useSessionStore(
+        useShallow((state) => [state.user_id, state.email, state.checkSession])
+    );
     const { verifyPasskey } = usePasskeyAuth();
+    const frontendUrl =
+        process.env.NEXT_PUBLIC_FRONTEND_URL || "http://localhost:3000";
     const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
+    // const shareUrl = `${frontendUrl}/polls/${poll.id}`;
+    const [shareUrl, setShareUrl] = useState("");
     const [pollData, setPollData] = useState<PollWithUserVote | null>(null);
     const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
     const [initialVote, setInitialVote] = useState<string[]>([]);
-    const [voteChanged, setVoteChanged] = useState(false);
+    const [voteChanged, setVoteChanged] = useState<boolean>(false);
+    const [isCreator, setIsCreator] = useState<boolean>(false);
+    const [chartType, setChartType] = useState<"bar" | "pie">("bar");
 
     const fetchPoll = async () => {
         try {
             const response = await fetch(
-                `/api/polls/${params.pollId}?userId=${session?.user?.id}`,
+                `/api/polls/${params.pollId}?userId=${user_id}`,
                 {
                     method: "GET",
                 }
             );
             const data = await response.json();
             setPollData(data.poll);
+            setShareUrl(`${frontendUrl}/polls/${data.poll.id}`);
             if (data?.poll?.user_vote) {
                 setSelectedOptions(data.poll.user_vote.option_ids);
                 setInitialVote(data.poll.user_vote.option_ids);
+            }
+            if (data?.poll?.created_by === user_id) {
+                setIsCreator(true);
             }
         } catch (error) {
             console.error("Error fetching poll:", error);
@@ -92,12 +118,14 @@ const PollPage: NextPage<PollPageProps> = ({ params }) => {
     };
 
     useEffect(() => {
-        if (params.pollId && session?.user?.id) {
+        console.log(user_id);
+        console.log(email);
+        if (params.pollId && user_id) {
             fetchPoll();
             const cleanUp = setupSSE();
             return cleanUp;
         }
-    }, [params.pollId, session?.user?.id]);
+    }, [params.pollId, user_id]);
 
     useEffect(() => {
         setVoteChanged(
@@ -106,9 +134,9 @@ const PollPage: NextPage<PollPageProps> = ({ params }) => {
     }, [selectedOptions, initialVote]);
 
     const handleVote = async () => {
-        if (!session?.user?.email || !pollData?.active) return;
+        if (typeof email !== "string" || !pollData?.active) return;
         try {
-            const isVerified = await verifyPasskey(session?.user?.email);
+            const isVerified = await verifyPasskey(email);
             if (!isVerified) {
                 return;
             }
@@ -118,7 +146,7 @@ const PollPage: NextPage<PollPageProps> = ({ params }) => {
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
-                    user_id: session?.user?.id,
+                    user_id: user_id,
                     option_ids: selectedOptions,
                 }),
             });
@@ -129,12 +157,8 @@ const PollPage: NextPage<PollPageProps> = ({ params }) => {
         }
     };
 
-    if (!pollData || !Array.isArray(pollData.options))
-        return <div>Loading...</div>;
-
     const handleOptionChange = (optionId: string, isChecked: boolean) => {
         if (pollData?.multiple_choices) {
-            // Handle as checkboxes (multiple choices allowed)
             if (isChecked) {
                 setSelectedOptions([...selectedOptions, optionId]);
             } else {
@@ -143,16 +167,57 @@ const PollPage: NextPage<PollPageProps> = ({ params }) => {
                 );
             }
         } else {
-            // Handle as radio buttons (single choice allowed)
             setSelectedOptions([optionId]);
         }
     };
 
+    const togglePollStatus = async () => {
+        const newStatus = !pollData?.active;
+        const isVerified = await verifyPasskey(email as string);
+        if (!isVerified) {
+            return;
+        }
+        const response = await fetch(
+            `${backendUrl}/polls/${pollData?.id}/status`,
+            {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ active: newStatus }),
+            }
+        );
+
+        if (response.ok) {
+            setPollData((prev) => {
+                if (!prev) return prev;
+
+                return {
+                    ...prev,
+                    active: newStatus,
+                };
+            });
+        } else {
+            console.error("Failed to update poll status");
+        }
+    };
+
+    const chartData =
+        pollData?.options.map((option) => ({
+            name: option.text,
+            votes: option.count,
+        })) || [];
+
+    const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042"];
+
+    if (!pollData || !Array.isArray(pollData.options))
+        return <div>Loading...</div>;
+
     return (
         <div className="max-w-4xl mx-auto pt-16 p-6 ">
-            <h1 className="text-3xl font-bold mb-8 text-center text-gray-800">
-                {pollData.question}
-            </h1>
+            <div className=" mb-8 text-center text-gray-800 flex items-center justify-center space-x-2">
+                <h1 className="text-3xl font-bold">{pollData.question}</h1>
+            </div>
 
             {!pollData.active && (
                 <div className="text-red-600 text-center font-bold text-lg mb-8">
@@ -267,6 +332,91 @@ const PollPage: NextPage<PollPageProps> = ({ params }) => {
                             );
                         })}
                     </div>
+                </div>
+
+                <div className=" w-full md:col-span-2 justify-center">
+                    <ShareButton className=" w-full" shareUrl={shareUrl} />
+                </div>
+
+                {isCreator && (
+                    <div className="md:col-span-2 w-full grid grid-cols-2 gap-6 md:gap-8">
+                        <button
+                            onClick={togglePollStatus}
+                            className={`${
+                                pollData.active
+                                    ? "bg-red-700 hover:bg-red-500"
+                                    : "bg-blue-800 hover:bg-blue-700"
+                            } text-white py-2  px-4 rounded-md col-span-1 `}
+                        >
+                            {pollData.active ? "Disable" : "Enable"}
+                        </button>
+                        <button
+                            onClick={togglePollStatus}
+                            className={`${"bg-red-700 hover:bg-red-500"} text-white py-2  px-4 rounded-md col-span-1 `}
+                        >
+                            Reset votes
+                        </button>
+                    </div>
+                )}
+
+                {/* Results Graphs */}
+                <div className="bg-white shadow-lg rounded-lg p-6 md:col-span-2">
+                    <h2 className="text-xl font-semibold mb-4 text-gray-700">
+                        {pollData?.active ? "Live " : " "}Result Graphs
+                    </h2>
+                    <div className="mb-4">
+                        <label className="mr-2">Graph Type:</label>
+                        <select
+                            value={chartType}
+                            onChange={(e) =>
+                                setChartType(e.target.value as "bar" | "pie")
+                            }
+                            className="border rounded px-2 py-1"
+                        >
+                            <option value="bar">Bar Chart</option>
+                            <option value="pie">Pie Chart</option>
+                        </select>
+                    </div>
+
+                    {chartType === "bar" ? (
+                        <ResponsiveContainer width="100%" height={300}>
+                            <BarChart data={chartData}>
+                                <XAxis dataKey="name" />
+                                <YAxis />
+                                <Tooltip />
+                                <Legend />
+                                <Bar dataKey="votes" fill="#1e40af" />
+                            </BarChart>
+                        </ResponsiveContainer>
+                    ) : (
+                        <ResponsiveContainer width="100%" height={300}>
+                            <PieChart>
+                                <Pie
+                                    data={chartData}
+                                    dataKey="votes"
+                                    nameKey="name"
+                                    outerRadius={100}
+                                    fill="#8884d8"
+                                >
+                                    {chartData.map((entry, index) => (
+                                        <Cell
+                                            key={`cell-${index}`}
+                                            fill={COLORS[index % COLORS.length]}
+                                        />
+                                    ))}
+                                </Pie>
+                                <Tooltip />
+                            </PieChart>
+                        </ResponsiveContainer>
+                    )}
+
+                    <p className="mt-4 text-center">
+                        Total Votes:{" "}
+                        {pollData?.options.reduce(
+                            (sum, option) => sum + option.count,
+                            0
+                        )}
+                    </p>
                 </div>
             </div>
         </div>
