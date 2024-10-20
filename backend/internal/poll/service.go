@@ -114,6 +114,16 @@ func (s *PollService) Vote(ctx context.Context, pollID, userID primitive.ObjectI
 		return errors.New("multiple choices not allowed for this poll")
 	}
 
+	existingVote, err := s.voteService.GetVote(ctx, pollID, userID)
+    if err != nil && err != mongo.ErrNoDocuments {
+        return err
+    }
+
+    if existingVote != nil {
+        // User has already voted; update their vote
+        return s.updateVote(ctx, existingVote, optionIDs)
+    }
+
 	// Use VoteService to add the vote
 	err = s.voteService.AddVote(ctx, pollID, userID, optionIDs)
 	if err != nil {
@@ -145,6 +155,59 @@ func (s *PollService) Vote(ctx context.Context, pollID, userID primitive.ObjectI
 	}
 
 	return nil
+}
+
+func (s *PollService) updateVote(ctx context.Context, existingVote *vote.Vote, newOptionIDs []primitive.ObjectID) error {
+    // Decrease counts for the old options
+    update := bson.M{
+        "$inc": bson.M{
+            "options.$[oldElem].count": -1,
+        },
+    }
+
+    _, err := s.pollCollection.UpdateOne(
+        ctx,
+        bson.M{"_id": existingVote.PollID},
+        update,
+        options.Update().SetArrayFilters(
+            options.ArrayFilters{
+                Filters: []interface{}{
+                    bson.M{"oldElem._id": bson.M{"$in": existingVote.OptionIDs}},
+                },
+            },
+        ),
+    )
+    if err != nil {
+        return err
+    }
+
+    // Create and insert the new vote
+    err = s.voteService.UpdateVote(ctx, existingVote, newOptionIDs)
+    if err != nil {
+        return err
+    }
+
+    // Increase counts for the new options
+    update = bson.M{
+        "$inc": bson.M{
+            "options.$[newElem].count": 1,
+        },
+    }
+
+    _, err = s.pollCollection.UpdateOne(
+        ctx,
+        bson.M{"_id": existingVote.PollID},
+        update,
+        options.Update().SetArrayFilters(
+            options.ArrayFilters{
+                Filters: []interface{}{
+                    bson.M{"newElem._id": bson.M{"$in": newOptionIDs}},
+                },
+            },
+        ),
+    )
+
+    return err
 }
 
 func (s *PollService) UpdatePollStatus(ctx context.Context, pollID primitive.ObjectID, active bool) error {
