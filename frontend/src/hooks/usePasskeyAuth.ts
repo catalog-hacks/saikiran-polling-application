@@ -37,7 +37,7 @@ export function usePasskeyAuth() {
                     email,
                     name,
                     action: "register",
-                    redirect: false,
+                    redirect: true,
                 });
 
                 if (result?.error) {
@@ -81,7 +81,7 @@ export function usePasskeyAuth() {
                 const result = await signIn("credentials", {
                     email,
                     action: "login",
-                    redirect: false,
+                    redirect: true,
                 });
 
                 if (result?.error) {
