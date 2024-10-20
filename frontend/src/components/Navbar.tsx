@@ -1,13 +1,21 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useLayoutEffect } from "react";
 import Link from "next/link";
-import { signOut, useSession } from "next-auth/react";
+import { signOut } from "next-auth/react";
 import { MenuIcon } from "lucide-react";
+import { useShallow } from "zustand/shallow";
+import { useSessionStore } from "@/store/useSessionStore";
 
 const Navbar = () => {
-    const { data: session, status } = useSession();
+    const [status, checkSession] = useSessionStore(
+        useShallow((state) => [state.status, state.checkSession])
+    );
     const [loading, setLoading] = useState(true);
+    useLayoutEffect(() => {
+        checkSession();
+    }, [checkSession]);
+
     useEffect(() => {
         if (status === "loading") {
         } else {
@@ -17,7 +25,7 @@ const Navbar = () => {
 
     return (
         <nav
-            className={`fixed top-0 left-0 w-full h-20 z-50 flex justify-between items-center p-4 transition-all duration-300 ${"bg-white shadow-md dark:bg-gray-900"}`}
+            className={`fixed top-0 left-0 w-full h-20 z-50 flex justify-between items-center p-4 transition-all duration-300 ${"bg-white shadow-md dark:bg-gray-800"}`}
         >
             <div className="flex items-center">
                 <Link
