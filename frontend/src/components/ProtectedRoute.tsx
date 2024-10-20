@@ -13,24 +13,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     const router = useRouter();
 
     //Maximum depth will be reached if useShallow is not used with zustand
-    const [status, checkSession] = useSessionStore(
-        useShallow((state) => [state.status, state.checkSession])
-    );
-    useEffect(() => {
-        let mounted = true;
-
-        const initSession = async () => {
-            if (mounted) {
-                await checkSession();
-            }
-        };
-
-        initSession();
-
-        return () => {
-            mounted = false;
-        };
-    }, [checkSession]);
+    const [status] = useSessionStore(useShallow((state) => [state.status]));
 
     useEffect(() => {
         if (status === "unauthenticated") {
