@@ -17,6 +17,8 @@
     "next-auth": "^5.0.0-beta.22",
     "react": "^18",
     "react-dom": "^18",
+    "recharts": "^2.13.0",
+    "tailwind-merge": "^2.5.4",
     "zustand": "^5.0.0"
   },
   "devDependencies": {
