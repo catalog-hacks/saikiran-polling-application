@@ -35,6 +35,7 @@ export const PUT = async (
                 "Content-Type": "application/json",
             },
             body: JSON.stringify({
+                userId,
                 active: active,
             }),
         });
