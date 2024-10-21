@@ -22,7 +22,7 @@ async function getPollData(pollId: string): Promise<PollWithUserVote> {
     }
 
     const data = await res.json();
-    return data.poll;
+    return data;
 }
 
 export default async function PollPage({
