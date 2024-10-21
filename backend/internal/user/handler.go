@@ -60,7 +60,14 @@ func (h *UserHandler) BeginRegistration(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// Store session data in MongoDB
+	// Check for existing session and delete it if found
+	filter := bson.M{"userId": user.ID}
+	if _, err := h.db.Collection("sessions").DeleteMany(r.Context(), filter); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Store the new session data in MongoDB
 	_, err = h.db.Collection("sessions").InsertOne(r.Context(), bson.M{
 		"userId": user.ID,
 		"data":   sessionData,
@@ -86,6 +93,7 @@ func (h *UserHandler) BeginRegistration(w http.ResponseWriter, r *http.Request) 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
 }
+
 
 func (h *UserHandler) FinishRegistration(w http.ResponseWriter, r *http.Request) {
 	var req struct {
@@ -157,7 +165,7 @@ func (h *UserHandler) BeginLogin(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	
+
 	user, err := h.userService.GetUserByEmail(req.Email)
 	if err != nil {
 		http.Error(w, "User not found", http.StatusNotFound)
@@ -172,7 +180,14 @@ func (h *UserHandler) BeginLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Store session data in MongoDB
+	// Check for existing session and delete it if found
+	filter := bson.M{"userId": user.ID}
+	if _, err := h.db.Collection("sessions").DeleteMany(r.Context(), filter); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Store the new session data in MongoDB
 	_, err = h.db.Collection("sessions").InsertOne(r.Context(), bson.M{
 		"userId": user.ID,
 		"data":   sessionData,
@@ -185,6 +200,7 @@ func (h *UserHandler) BeginLogin(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(options)
 }
+
 
 func (h *UserHandler) FinishLogin(w http.ResponseWriter, r *http.Request) {
 	var req struct {
