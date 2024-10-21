@@ -20,14 +20,14 @@ const UserPolls = () => {
 
     const fetchPollsByUser = async () => {
         try {
-            const response = await fetch(
-                `${backendUrl}/userpolls?userId=${user_id}`
-            );
+            const response = await fetch(`/api/polls/userpolls`);
+
             if (!response.ok) {
                 throw new Error("Failed to fetch polls");
             }
+
             const data = await response.json();
-            setPolls(data);
+            setPolls(data.polls);
         } catch (err: any) {
             setError(err.message);
         }
