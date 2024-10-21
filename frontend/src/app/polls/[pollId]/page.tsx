@@ -202,6 +202,46 @@ const PollPage: NextPage<PollPageProps> = ({ params }) => {
         }
     };
 
+    const clearPollVotes = async () => {
+        const isVerified = await verifyPasskey(email as string);
+        if (!isVerified) {
+            return;
+        }
+
+        const response = await fetch(
+            `${backendUrl}/polls/${pollData?.id}/clear-votes`,
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+            }
+        );
+
+        if (response.ok) {
+            setPollData((prev) => {
+                if (!prev) return prev;
+
+                // Reset all option counts to zero
+                const updatedOptions = prev.options.map((option) => ({
+                    ...option,
+                    count: 0,
+                }));
+
+                return {
+                    ...prev,
+                    options: updatedOptions,
+                    user_vote: { option_ids: [] },
+                };
+            });
+            setInitialVote([]);
+            setSelectedOptions([]);
+            setVoteChanged(true);
+        } else {
+            console.error("Failed to clear poll votes");
+        }
+    };
+
     const chartData =
         pollData?.options.map((option) => ({
             name: option.text,
@@ -351,7 +391,7 @@ const PollPage: NextPage<PollPageProps> = ({ params }) => {
                             {pollData.active ? "Disable" : "Enable"}
                         </button>
                         <button
-                            onClick={togglePollStatus}
+                            onClick={clearPollVotes}
                             className={`${"bg-red-700 hover:bg-red-500"} text-white py-2  px-4 rounded-md col-span-1 `}
                         >
                             Reset votes
