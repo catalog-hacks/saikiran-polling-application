@@ -116,3 +116,8 @@ func (s *VoteService) UpdateVote(ctx context.Context, existingVote *Vote, newOpt
     _, err := s.voteCollection.UpdateOne(ctx, filter, update)
     return err
 }
+
+
+func (s *VoteService) DeletePollVotes(ctx context.Context, pollID primitive.ObjectID) (*mongo.DeleteResult, error) {
+    return s.voteCollection.DeleteMany(ctx, bson.M{"poll_id": pollID})
+}
