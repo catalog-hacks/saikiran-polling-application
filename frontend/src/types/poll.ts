@@ -24,3 +24,11 @@ export interface Vote {
     optionIds: ObjectId[];
     votedAt: Date;
 }
+
+export interface UserVote {
+    option_ids: string[];
+}
+
+export interface PollWithUserVote extends Poll {
+    user_vote: UserVote | null;
+}
