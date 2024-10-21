@@ -73,8 +73,6 @@ const PollComponent: NextPage<ClientPollComponentProps> = ({
 
     const setupSSE = () => {
         const connectSSE = () => {
-            console.log("Establishing SSE connection...");
-
             const eventSource = new EventSource(
                 `${backendUrl}/polls/${pollId}/stream`,
                 { withCredentials: false }
@@ -118,7 +116,6 @@ const PollComponent: NextPage<ClientPollComponentProps> = ({
 
     useEffect(() => {
         if (pollId && user_id) {
-            fetchPoll();
             const cleanUp = setupSSE();
             return cleanUp;
         }
@@ -250,15 +247,16 @@ const PollComponent: NextPage<ClientPollComponentProps> = ({
     };
 
     const chartData =
-        pollData?.options.map((option) => ({
+        pollData?.options?.map((option) => ({
             name: option.text,
             votes: option.count,
         })) || [];
 
     const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042"];
 
-    if (!pollData || !Array.isArray(pollData.options))
+    if (!pollData || !Array.isArray(pollData.options)) {
         return <div>Loading...</div>;
+    }
 
     return (
         <div className="max-w-4xl mx-auto pt-16 p-6 ">
