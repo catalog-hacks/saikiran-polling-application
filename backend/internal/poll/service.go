@@ -230,3 +230,31 @@ func (s *PollService) UpdatePollStatus(ctx context.Context, pollID primitive.Obj
 
     return nil
 }
+
+
+// Update this method in PollService struct in poll/service.go
+func (s *PollService) ClearPollVotes(ctx context.Context, pollID primitive.ObjectID) error {
+    // 1. Reset all option counts to zero
+    filter := bson.M{"_id": pollID}
+    update := bson.M{
+        "$set": bson.M{
+            "options.$[].count": 0,
+        },
+    }
+    
+    result, err := s.pollCollection.UpdateOne(ctx, filter, update)
+    if err != nil {
+        return err
+    }
+    if result.MatchedCount == 0 {
+        return errors.New("poll not found")
+    }
+
+    // 2. Delete all votes for this poll
+    _, err = s.voteService.DeletePollVotes(ctx, pollID)
+    if err != nil {
+        return err
+    }
+
+    return nil
+}
