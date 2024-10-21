@@ -211,17 +211,7 @@ func (s *PollService) updateVote(ctx context.Context, existingVote *vote.Vote, n
 }
 
 func (s *PollService) UpdatePollStatus(ctx context.Context, pollID primitive.ObjectID, userID primitive.ObjectID, active bool) error {
-    var poll struct {
-        CreatedBy primitive.ObjectID `bson:"created_by"`
-    }
-
-    err := s.pollCollection.FindOne(ctx, bson.M{"_id": pollID}).Decode(&poll)
-    if err != nil {
-        if err == mongo.ErrNoDocuments {
-            return errors.New("poll not found")
-        }
-        return err
-    }
+    poll, err := s.GetPoll(ctx, pollID)
 
     if poll.CreatedBy != userID {
         return errors.New("unauthorized: user is not the creator of the poll")
@@ -249,8 +239,13 @@ func (s *PollService) UpdatePollStatus(ctx context.Context, pollID primitive.Obj
 
 
 // Update this method in PollService struct in poll/service.go
-func (s *PollService) ClearPollVotes(ctx context.Context, pollID primitive.ObjectID) error {
-    // 1. Reset all option counts to zero
+func (s *PollService) ClearPollVotes(ctx context.Context, pollID primitive.ObjectID, userID primitive.ObjectID) error {
+    poll, err := s.GetPoll(ctx, pollID)
+
+    if poll.CreatedBy != userID {
+        return errors.New("unauthorized: user is not the creator of the poll")
+    }
+
     filter := bson.M{"_id": pollID}
     update := bson.M{
         "$set": bson.M{
@@ -266,7 +261,6 @@ func (s *PollService) ClearPollVotes(ctx context.Context, pollID primitive.Objec
         return errors.New("poll not found")
     }
 
-    // 2. Delete all votes for this poll
     _, err = s.voteService.DeletePollVotes(ctx, pollID)
     if err != nil {
         return err
