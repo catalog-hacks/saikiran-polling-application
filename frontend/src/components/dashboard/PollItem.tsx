@@ -26,7 +26,7 @@ const PollItem = ({ poll, email }: { poll: Poll; email: string }) => {
         if (!isVerified) {
             return;
         }
-        const response = await fetch(`${backendUrl}/polls/${poll.id}/status`, {
+        const response = await fetch(`/api/polls/${poll?.id}/status`, {
             method: "PUT",
             headers: {
                 "Content-Type": "application/json",
