@@ -210,7 +210,23 @@ func (s *PollService) updateVote(ctx context.Context, existingVote *vote.Vote, n
     return err
 }
 
-func (s *PollService) UpdatePollStatus(ctx context.Context, pollID primitive.ObjectID, active bool) error {
+func (s *PollService) UpdatePollStatus(ctx context.Context, pollID primitive.ObjectID, userID primitive.ObjectID, active bool) error {
+    var poll struct {
+        CreatedBy primitive.ObjectID `bson:"created_by"`
+    }
+
+    err := s.pollCollection.FindOne(ctx, bson.M{"_id": pollID}).Decode(&poll)
+    if err != nil {
+        if err == mongo.ErrNoDocuments {
+            return errors.New("poll not found")
+        }
+        return err
+    }
+
+    if poll.CreatedBy != userID {
+        return errors.New("unauthorized: user is not the creator of the poll")
+    }
+
     filter := bson.M{"_id": pollID}
     update := bson.M{
         "$set": bson.M{
@@ -218,7 +234,6 @@ func (s *PollService) UpdatePollStatus(ctx context.Context, pollID primitive.Obj
         },
     }
 
-    // Update the poll in the database
     result, err := s.pollCollection.UpdateOne(ctx, filter, update)
     if err != nil {
         return err
@@ -230,6 +245,7 @@ func (s *PollService) UpdatePollStatus(ctx context.Context, pollID primitive.Obj
 
     return nil
 }
+
 
 
 // Update this method in PollService struct in poll/service.go
