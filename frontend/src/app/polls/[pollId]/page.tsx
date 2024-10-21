@@ -51,12 +51,9 @@ const PollPage: NextPage<PollPageProps> = ({ params }) => {
 
     const fetchPoll = async () => {
         try {
-            const response = await fetch(
-                `/api/polls/${params.pollId}?userId=${user_id}`,
-                {
-                    method: "GET",
-                }
-            );
+            const response = await fetch(`/api/polls/${params.pollId}`, {
+                method: "GET",
+            });
             const data = await response.json();
             setPollData(data.poll);
             setShareUrl(`${frontendUrl}/polls/${data.poll.id}`);
@@ -118,8 +115,6 @@ const PollPage: NextPage<PollPageProps> = ({ params }) => {
     };
 
     useEffect(() => {
-        console.log(user_id);
-        console.log(email);
         if (params.pollId && user_id) {
             fetchPoll();
             const cleanUp = setupSSE();
@@ -135,21 +130,26 @@ const PollPage: NextPage<PollPageProps> = ({ params }) => {
 
     const handleVote = async () => {
         if (typeof email !== "string" || !pollData?.active) return;
+
         try {
             const isVerified = await verifyPasskey(email);
             if (!isVerified) {
                 return;
             }
-            await fetch(`${backendUrl}/polls/${params.pollId}/vote`, {
+            const response = await fetch(`/api/polls/${params.pollId}/vote`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
-                    user_id: user_id,
                     option_ids: selectedOptions,
                 }),
             });
+
+            if (!response.ok) {
+                throw new Error("Failed to vote");
+            }
+
             fetchPoll();
             setVoteChanged(false);
         } catch (error) {
@@ -173,72 +173,77 @@ const PollPage: NextPage<PollPageProps> = ({ params }) => {
 
     const togglePollStatus = async () => {
         const newStatus = !pollData?.active;
-        const isVerified = await verifyPasskey(email as string);
-        if (!isVerified) {
-            return;
-        }
-        const response = await fetch(
-            `${backendUrl}/polls/${pollData?.id}/status`,
-            {
+
+        try {
+            const isVerified = await verifyPasskey(email as string);
+            if (!isVerified) {
+                return;
+            }
+            const response = await fetch(`/api/polls/${pollData?.id}/status`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({ active: newStatus }),
-            }
-        );
-
-        if (response.ok) {
-            setPollData((prev) => {
-                if (!prev) return prev;
-
-                return {
-                    ...prev,
-                    active: newStatus,
-                };
             });
-        } else {
-            console.error("Failed to update poll status");
+
+            if (response.ok) {
+                setPollData((prev) => {
+                    if (!prev) return prev;
+
+                    return {
+                        ...prev,
+                        active: newStatus,
+                    };
+                });
+            } else {
+                console.error("Failed to update poll status");
+            }
+        } catch (error) {
+            console.error("Error toggling poll status:", error);
         }
     };
 
     const clearPollVotes = async () => {
-        const isVerified = await verifyPasskey(email as string);
-        if (!isVerified) {
-            return;
-        }
-
-        const response = await fetch(
-            `${backendUrl}/polls/${pollData?.id}/clear-votes`,
-            {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
+        try {
+            const isVerified = await verifyPasskey(email as string);
+            if (!isVerified) {
+                return;
             }
-        );
 
-        if (response.ok) {
-            setPollData((prev) => {
-                if (!prev) return prev;
+            const response = await fetch(
+                `/api/polls/${pollData?.id}/clear-votes`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                }
+            );
 
-                // Reset all option counts to zero
-                const updatedOptions = prev.options.map((option) => ({
-                    ...option,
-                    count: 0,
-                }));
+            if (response.ok) {
+                setPollData((prev) => {
+                    if (!prev) return prev;
 
-                return {
-                    ...prev,
-                    options: updatedOptions,
-                    user_vote: { option_ids: [] },
-                };
-            });
-            setInitialVote([]);
-            setSelectedOptions([]);
-            setVoteChanged(true);
-        } else {
-            console.error("Failed to clear poll votes");
+                    const updatedOptions = prev.options.map((option) => ({
+                        ...option,
+                        count: 0,
+                    }));
+
+                    return {
+                        ...prev,
+                        options: updatedOptions,
+                        user_vote: { option_ids: [] },
+                    };
+                });
+                setInitialVote([]);
+                setSelectedOptions([]);
+                setVoteChanged(true);
+            } else {
+                console.error("Failed to clear poll votes");
+            }
+        } catch (error) {
+            console.error("Error clearing poll votes:", error);
         }
     };
 
