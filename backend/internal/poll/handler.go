@@ -275,6 +275,7 @@ func (h *PollHandler) notifyClients(pollID string, poll *Poll) {
 
 type PollStatusUpdateRequest struct {
     Active bool `json:"active"` // The new status (true for enable, false for disable)
+    UserID primitive.ObjectID `json:"userId"`
 }
 
 // TogglePollStatus handles enabling/disabling a poll
@@ -294,7 +295,7 @@ func (h *PollHandler) TogglePollStatus(w http.ResponseWriter, r *http.Request) {
     }
 
     // Call the poll service to update the poll status
-    err = h.pollService.UpdatePollStatus(r.Context(), pollID, req.Active)
+    err = h.pollService.UpdatePollStatus(r.Context(), pollID,req.UserID, req.Active)
     if err != nil {
         http.Error(w, err.Error(), http.StatusInternalServerError)
         return
