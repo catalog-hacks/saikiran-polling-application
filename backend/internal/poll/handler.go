@@ -216,7 +216,7 @@ func (h *PollHandler) StreamPollUpdates(w http.ResponseWriter, r *http.Request) 
     }()
 
     // Send initial connection message
-    fmt.Fprintf(w, "data: {\"status\": \"connected\"}\n\n")
+    // fmt.Fprintf(w, "data: {\"status\": \"connected\"}\n\n")
     flusher.Flush()
 
     // Stream updates to the client
