@@ -315,3 +315,35 @@ func (h *PollHandler) TogglePollStatus(w http.ResponseWriter, r *http.Request) {
         "message": "Poll status updated successfully",
     })
 }
+
+func (h *PollHandler) ClearPollVotes(w http.ResponseWriter, r *http.Request) {
+    // Get poll ID from URL parameters
+    pollID, err := primitive.ObjectIDFromHex(mux.Vars(r)["id"])
+    if err != nil {
+        http.Error(w, "Invalid poll ID", http.StatusBadRequest)
+        return
+    }
+
+    // Call service method to clear votes
+    err = h.pollService.ClearPollVotes(r.Context(), pollID)
+    if err != nil {
+        http.Error(w, err.Error(), http.StatusInternalServerError)
+        return
+    }
+
+    // Fetch the updated poll
+    updatedPoll, err := h.pollService.GetPoll(r.Context(), pollID)
+    if err != nil {
+        http.Error(w, err.Error(), http.StatusInternalServerError)
+        return
+    }
+
+    // Notify all clients subscribed to this poll about the update
+    h.notifyClients(pollID.Hex(), updatedPoll)
+
+    // Return success response
+    w.WriteHeader(http.StatusOK)
+    json.NewEncoder(w).Encode(map[string]string{
+        "message": "Poll votes cleared successfully",
+    })
+}
