@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, ReactNode } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useSessionStore } from "@/store/useSessionStore";
 import { useShallow } from "zustand/shallow";
 
@@ -11,15 +11,16 @@ interface ProtectedRouteProps {
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     const router = useRouter();
+    const pathname = usePathname();
 
-    //Maximum depth will be reached if useShallow is not used with zustand
     const [status] = useSessionStore(useShallow((state) => [state.status]));
 
     useEffect(() => {
         if (status === "unauthenticated") {
-            router.push("/auth");
+            const callbackUrl = encodeURIComponent(pathname);
+            router.push(`/auth?callbackUrl=${callbackUrl}`);
         }
-    }, [status, router]);
+    }, [status, router, pathname]);
 
     if (status === "loading") {
         return (
