@@ -1,5 +1,3 @@
-// poll.ts in /src/types
-
 import { ObjectId } from "mongodb";
 
 export interface Poll {

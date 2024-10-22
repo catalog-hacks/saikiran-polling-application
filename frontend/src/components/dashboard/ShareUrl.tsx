@@ -23,7 +23,7 @@ const ShareButton = ({
     return (
         <button
             className={cn(
-                ` border-gray-800 text-gray-800 border-2 font-semibold py-2 px-4 rounded-md w-36 hover:bg-white duration-300 focus:outline-none`,
+                ` border-gray-800 text-gray-800 border-2 font-semibold py-2 px-4 rounded-md w-36 bg-gray-50 hover:bg-white duration-300 focus:outline-none`,
                 className
             )}
             onClick={handleCopy}

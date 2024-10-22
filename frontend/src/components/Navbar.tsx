@@ -77,7 +77,7 @@ const Navbar = () => {
                                 <div className="relative">
                                     <button
                                         onClick={toggleDropdown}
-                                        className="flex items-center justify-center px-4 py-2 bg-blue-800 text-white rounded-full font-semibold hover:bg-blue-700 transition duration-300 shadow-md"
+                                        className="flex items-center justify-center px-6 py-3 bg-blue-800 text-white rounded-full font-semibold hover:bg-blue-700 transition duration-300 shadow-md"
                                     >
                                         {username}
                                         <ChevronDownIcon className=" ml-1 mt-1 w-4 h-4" />
@@ -87,13 +87,13 @@ const Navbar = () => {
                                             <Link
                                                 href={"/mypolls"}
                                                 onClick={toggleDropdown}
-                                                className="block w-full text-left px-4 py-2 text-sm rounded-md text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-600"
+                                                className="block w-full text-left px-4 py-2  rounded-md text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-600"
                                             >
                                                 Dashboard
                                             </Link>
                                             <button
                                                 onClick={handleSignOut}
-                                                className="block w-full text-left px-4 py-2 text-sm rounded-md text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-600"
+                                                className="block w-full text-left px-4 py-2  rounded-md text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-600"
                                             >
                                                 Sign Out
                                             </button>
