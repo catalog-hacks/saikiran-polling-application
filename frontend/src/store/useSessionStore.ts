@@ -6,6 +6,7 @@ import { getSession } from "next-auth/react";
 interface SessionState {
     user_id: string | null;
     email: string | null;
+    username: string | null;
     status: "authenticated" | "loading" | "unauthenticated";
     setSession: (
         user_id: string | null,
@@ -19,6 +20,7 @@ interface SessionState {
 export const useSessionStore = create<SessionState>((set) => ({
     user_id: null,
     email: null,
+    username: null,
     status: "loading",
     setSession: (user_id, email, status) => set({ user_id, email, status }),
     clearSession: () =>
@@ -30,12 +32,14 @@ export const useSessionStore = create<SessionState>((set) => ({
                 set({
                     user_id: session.user.id || null,
                     email: session.user.email || null,
+                    username: session.user.name || null,
                     status: "authenticated",
                 });
             } else {
                 set({
                     user_id: null,
                     email: null,
+                    username: null,
                     status: "unauthenticated",
                 });
             }
@@ -44,6 +48,7 @@ export const useSessionStore = create<SessionState>((set) => ({
             set({
                 user_id: null,
                 email: null,
+                username: null,
                 status: "unauthenticated",
             });
         }
