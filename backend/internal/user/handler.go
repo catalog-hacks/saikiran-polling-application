@@ -6,24 +6,23 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/SaiKiranMatta/nextjs-golang-polling-application/backend/internal/session"
 	"github.com/go-webauthn/webauthn/protocol"
 	"github.com/go-webauthn/webauthn/webauthn"
-	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type UserHandler struct {
-	userService *UserService
-	webauthn    *webauthn.WebAuthn
-	db          *mongo.Database
+	userService    *UserService
+	webauthn       *webauthn.WebAuthn
+	sessionService *session.SessionService
 }
 
-func NewUserHandler(userService *UserService, webauthn *webauthn.WebAuthn, db *mongo.Database) *UserHandler {
+func NewUserHandler(userService *UserService, webauthn *webauthn.WebAuthn, sessionService *session.SessionService) *UserHandler {
 	return &UserHandler{
-		userService: userService,
-		webauthn:    webauthn,
-		db:          db,
+		userService:    userService,
+		webauthn:       webauthn,
+		sessionService: sessionService,
 	}
 }
 
@@ -53,26 +52,18 @@ func (h *UserHandler) BeginRegistration(w http.ResponseWriter, r *http.Request) 
 	}
 
 	webAuthnUser := NewWebAuthnUser(user)
-
 	options, sessionData, err := h.webauthn.BeginRegistration(webAuthnUser)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	// Check for existing session and delete it if found
-	filter := bson.M{"userId": user.ID}
-	if _, err := h.db.Collection("sessions").DeleteMany(r.Context(), filter); err != nil {
+	if err := h.sessionService.DeleteSessionsByUserID(r.Context(), user.ID); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	// Store the new session data in MongoDB
-	_, err = h.db.Collection("sessions").InsertOne(r.Context(), bson.M{
-		"userId": user.ID,
-		"data":   sessionData,
-	})
-	if err != nil {
+	if err := h.sessionService.CreateSession(r.Context(), user.ID, *sessionData); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -83,7 +74,7 @@ func (h *UserHandler) BeginRegistration(w http.ResponseWriter, r *http.Request) 
 	}
 
 	response := struct {
-		UserID  string                        `json:"userId"`
+		UserID  string                       `json:"userId"`
 		Options *protocol.CredentialCreation `json:"options"`
 	}{
 		UserID:  user.ID.Hex(),
@@ -93,7 +84,6 @@ func (h *UserHandler) BeginRegistration(w http.ResponseWriter, r *http.Request) 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
 }
-
 
 func (h *UserHandler) FinishRegistration(w http.ResponseWriter, r *http.Request) {
 	var req struct {
@@ -119,19 +109,13 @@ func (h *UserHandler) FinishRegistration(w http.ResponseWriter, r *http.Request)
 
 	webAuthnUser := NewWebAuthnUser(user)
 
-	// Retrieve session data from MongoDB
-	var sessionDataDoc struct {
-		Data webauthn.SessionData `bson:"data"`
-	}
-	err = h.db.Collection("sessions").FindOne(r.Context(), bson.M{"userId": userID}).Decode(&sessionDataDoc)
+	sessionDataDoc, err := h.sessionService.GetSession(r.Context(), userID)
 	if err != nil {
 		http.Error(w, "Session not found", http.StatusBadRequest)
 		return
 	}
-	
-	// Delete session data after retrieval
-	_, err = h.db.Collection("sessions").DeleteOne(r.Context(), bson.M{"userId": userID})
-	if err != nil {
+
+	if err := h.sessionService.DeleteSession(r.Context(), userID); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -173,26 +157,18 @@ func (h *UserHandler) BeginLogin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	webAuthnUser := NewWebAuthnUser(user)
-
 	options, sessionData, err := h.webauthn.BeginLogin(webAuthnUser)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	// Check for existing session and delete it if found
-	filter := bson.M{"userId": user.ID}
-	if _, err := h.db.Collection("sessions").DeleteMany(r.Context(), filter); err != nil {
+	if err := h.sessionService.DeleteSessionsByUserID(r.Context(), user.ID); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	// Store the new session data in MongoDB
-	_, err = h.db.Collection("sessions").InsertOne(r.Context(), bson.M{
-		"userId": user.ID,
-		"data":   sessionData,
-	})
-	if err != nil {
+	if err := h.sessionService.CreateSession(r.Context(), user.ID, *sessionData); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -200,7 +176,6 @@ func (h *UserHandler) BeginLogin(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(options)
 }
-
 
 func (h *UserHandler) FinishLogin(w http.ResponseWriter, r *http.Request) {
 	var req struct {
@@ -212,12 +187,6 @@ func (h *UserHandler) FinishLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// userID, err := primitive.ObjectIDFromHex(req.UserID)
-	// if err != nil {
-	// 	http.Error(w, "Invalid user ID", http.StatusBadRequest)
-	// 	return
-	// }
-
 	user, err := h.userService.GetUserByEmail(req.Email)
 	if err != nil {
 		http.Error(w, "User not found", http.StatusNotFound)
@@ -225,20 +194,13 @@ func (h *UserHandler) FinishLogin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	webAuthnUser := NewWebAuthnUser(user)
-
-	// Retrieve session data from MongoDB
-	var sessionDataDoc struct {
-		Data webauthn.SessionData `bson:"data"`
-	}
-	err = h.db.Collection("sessions").FindOne(r.Context(), bson.M{"userId": user.ID}).Decode(&sessionDataDoc)
+	sessionDataDoc, err := h.sessionService.GetSession(r.Context(), user.ID)
 	if err != nil {
 		http.Error(w, "Session not found", http.StatusBadRequest)
 		return
 	}
-	
-	// Delete session data after retrieval
-	_, err = h.db.Collection("sessions").DeleteOne(r.Context(), bson.M{"userId": user.ID})
-	if err != nil {
+
+	if err := h.sessionService.DeleteSession(r.Context(), user.ID); err != nil {
 		log.Printf("Error deleting session: %v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -249,6 +211,7 @@ func (h *UserHandler) FinishLogin(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
 	_, err = h.webauthn.FinishLogin(webAuthnUser, sessionDataDoc.Data, newReq)
 	if err != nil {
 		log.Println(err.Error())
@@ -310,4 +273,3 @@ func createNewRequestWithBody(data json.RawMessage, originalReq *http.Request) (
 	newReq = newReq.WithContext(originalReq.Context())
 	return newReq, nil
 }
-
