@@ -27,7 +27,7 @@ func NewPollService(db *mongo.Database, voteService *vote.VoteService, userServi
 	}
 }
 
-func (s *PollService) CreatePoll(ctx context.Context, question string, options []string, createdBy primitive.ObjectID, multipleChoices bool) (*Poll, error) {
+func (s *PollService) CreatePoll(ctx context.Context, question string, description string, options []string, createdBy primitive.ObjectID, multipleChoices bool) (*Poll, error) {
 	pollOptions := make([]Option, len(options))
 	for i, opt := range options {
 		pollOptions[i] = Option{
@@ -40,6 +40,7 @@ func (s *PollService) CreatePoll(ctx context.Context, question string, options [
 	poll := &Poll{
 		ID:              primitive.NewObjectID(),
 		Question:        question,
+        Description:     description,
 		Options:         pollOptions,
 		CreatedBy:       createdBy,
 		CreatedAt:       time.Now(),
