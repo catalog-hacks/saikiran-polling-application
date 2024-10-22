@@ -5,6 +5,7 @@ import { ObjectId } from "mongodb";
 export interface Poll {
     id: ObjectId;
     question: string;
+    description: string;
     options: Option[];
     created_by: ObjectId;
     created_at: Date;
