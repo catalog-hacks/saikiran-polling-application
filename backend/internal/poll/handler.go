@@ -30,6 +30,7 @@ func NewPollHandler(pollService *PollService) *PollHandler {
 func (h *PollHandler) CreatePoll(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		Question        string   `json:"question"`
+        Description     string   `json:"description"`
 		Options         []string `json:"options"`
 		UserID          string   `json:"user_id"`
 		MultipleChoices bool     `json:"multiple_choices"`
@@ -46,7 +47,7 @@ func (h *PollHandler) CreatePoll(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	poll, err := h.pollService.CreatePoll(r.Context(), req.Question, req.Options, userID, req.MultipleChoices)
+	poll, err := h.pollService.CreatePoll(r.Context(), req.Question, req.Description, req.Options, userID, req.MultipleChoices)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
