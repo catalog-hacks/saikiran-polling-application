@@ -264,8 +264,9 @@ const PollComponent: NextPage<ClientPollComponentProps> = ({
 
     return (
         <div className="max-w-4xl mx-auto pt-16 p-6 ">
-            <div className=" mb-8 text-center text-gray-800 flex items-center justify-center space-x-2">
+            <div className=" mb-8 text-center text-gray-800 flex flex-col space-y-4 items-center justify-center space-x-2">
                 <h1 className="text-3xl font-bold">{pollData.question}</h1>
+                <p>{pollData?.description}</p>
             </div>
 
             {!pollData.active && (

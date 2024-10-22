@@ -70,9 +70,9 @@ const PollItem = ({ poll, email }: { poll: Poll; email: string }) => {
                         onClick={togglePollStatus}
                         className={`${
                             isActive
-                                ? "bg-red-700 hover:bg-red-500"
+                                ? "bg-gray-600 hover:bg-gray-500"
                                 : "bg-blue-800 hover:bg-blue-700"
-                        } text-white py-2 w-36 px-4 rounded-md `}
+                        } text-white py-2 w-36 px-4 rounded-md font-semibold`}
                     >
                         {isActive ? "Disable" : "Enable"}
                     </button>
