@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"math"
 	"net/http"
+	"strconv"
 	"sync"
 	"time"
 
@@ -353,4 +355,43 @@ func (h *PollHandler) ClearPollVotes(w http.ResponseWriter, r *http.Request) {
     json.NewEncoder(w).Encode(map[string]string{
         "message": "Poll votes cleared successfully",
     })
+}
+
+
+func (h *PollHandler) GetAllPolls(w http.ResponseWriter, r *http.Request) {
+    // Get query parameters
+    status := r.URL.Query().Get("status") // "active", "closed", or "all"
+    page, _ := strconv.Atoi(r.URL.Query().Get("page"))
+    limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
+
+    // Set defaults if not provided
+    if page < 1 {
+        page = 1
+    }
+    if limit < 1 {
+        limit = 10
+    }
+
+    // Calculate skip
+    skip := (page - 1) * limit
+
+    polls, total, err := h.pollService.GetAllPolls(r.Context(), status, skip, limit)
+    if err != nil {
+        http.Error(w, err.Error(), http.StatusInternalServerError)
+        return
+    }
+
+    response := struct {
+        Polls       []*Poll `json:"polls"`
+        Total       int64   `json:"total"`
+        CurrentPage int     `json:"currentPage"`
+        TotalPages  int     `json:"totalPages"`
+    }{
+        Polls:       polls,
+        Total:       total,
+        CurrentPage: page,
+        TotalPages:  int(math.Ceil(float64(total) / float64(limit))),
+    }
+
+    json.NewEncoder(w).Encode(response)
 }
