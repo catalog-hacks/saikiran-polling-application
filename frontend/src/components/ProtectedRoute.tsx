@@ -17,7 +17,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
 
     useEffect(() => {
         if (status === "unauthenticated") {
-            router.push("/");
+            router.push("/auth");
         }
     }, [status, router]);
 
