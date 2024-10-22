@@ -3,14 +3,17 @@
 import { useState } from "react";
 import { usePasskeyAuth } from "../hooks/usePasskeyAuth";
 
-export function RegisterForm() {
+interface RegisterFormProps {
+    callbackUrl: string;
+}
+export function RegisterForm({ callbackUrl }: RegisterFormProps) {
     const [email, setEmail] = useState("");
     const [name, setName] = useState("");
     const { register, error } = usePasskeyAuth();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        await register(email, name);
+        await register(email, name, callbackUrl);
     };
 
     return (

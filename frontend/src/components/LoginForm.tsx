@@ -1,13 +1,17 @@
 import { useState } from "react";
 import { usePasskeyAuth } from "../hooks/usePasskeyAuth";
 
-export function LoginForm() {
+interface LoginFormProps {
+    callbackUrl: string;
+}
+
+export function LoginForm({ callbackUrl }: LoginFormProps) {
     const [email, setEmail] = useState("");
     const { login, error } = usePasskeyAuth();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        await login(email);
+        await login(email, callbackUrl);
     };
 
     return (
