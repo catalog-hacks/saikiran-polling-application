@@ -1,4 +1,3 @@
-// app/polls/user/ClientPollsList.tsx
 "use client";
 
 import PollItem from "@/components/dashboard/PollItem";
@@ -16,7 +15,6 @@ export default function PollsList({ initialPolls }: ClientPollsListProps) {
     const [error, setError] = useState("");
     const [email] = useSessionStore(useShallow((state) => [state.email]));
 
-    // Optional: Refresh polls periodically or on specific events
     const refreshPolls = async () => {
         try {
             const response = await fetch(`/api/polls/userpolls`);
@@ -39,7 +37,7 @@ export default function PollsList({ initialPolls }: ClientPollsListProps) {
             {!polls ? (
                 <p>No polls created yet.</p>
             ) : (
-                <div className="space-y-6">
+                <div className=" flex flex-col space-y-6">
                     {polls.map((poll) => (
                         <PollItem
                             key={poll.id.toString()}

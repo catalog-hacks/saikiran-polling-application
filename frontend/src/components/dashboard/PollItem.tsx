@@ -5,6 +5,9 @@ import ShareButton from "./ShareUrl";
 import Link from "next/link";
 import { useState } from "react";
 import { usePasskeyAuth } from "@/hooks/usePasskeyAuth";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "../ui/button";
 
 const PollItem = ({ poll, email }: { poll: Poll; email: string }) => {
     const [isActive, setIsActive] = useState(poll.active);
@@ -42,43 +45,43 @@ const PollItem = ({ poll, email }: { poll: Poll; email: string }) => {
     };
 
     return (
-        <div className="p-4 bg-white rounded-md shadow">
+        <Card className="hover:shadow-lg transition-shadow">
             <Link href={shareUrl}>
-                <h2 className="text-lg font-semibold text-gray-800 hover:text-blue-700 duration-300">
-                    {poll.question}
-                </h2>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-lg font-bold">
+                        {poll.question}
+                    </CardTitle>
+                    <Badge variant={isActive ? "default" : "secondary"}>
+                        {isActive ? "Active" : "Inactive"}
+                    </Badge>
+                </CardHeader>
             </Link>
-            <p className="text-sm text-gray-600">
-                Created on:{" "}
-                {new Date(poll.created_at).toLocaleDateString(
-                    "en-US",
-                    dateOptions
-                )}
-            </p>
-
-            <div className="mt-4 flex justify-between space-x-4 items-center">
-                <span
-                    className={`${
-                        isActive ? "text-green-600" : "text-red-600"
-                    } text-sm `}
-                >
-                    Status: {isActive ? "active" : "inactive"}
-                </span>
-                <div className=" flex space-x-4">
-                    <ShareButton shareUrl={shareUrl} />
-                    <button
-                        onClick={togglePollStatus}
-                        className={`${
-                            isActive
-                                ? "bg-gray-600 hover:bg-gray-500"
-                                : "bg-blue-800 hover:bg-blue-700"
-                        } text-white py-2 w-36 px-4 rounded-md font-semibold`}
-                    >
-                        {isActive ? "Disable" : "Enable"}
-                    </button>
+            <CardContent>
+                <div className="mt-4 flex justify-between items-center space-x-4">
+                    <p className="text-sm text-gray-500">
+                        Created on:{" "}
+                        {new Date(poll.created_at).toLocaleDateString(
+                            "en-US",
+                            dateOptions
+                        )}
+                    </p>
+                    <div className="flex space-x-4">
+                        <ShareButton shareUrl={shareUrl} />
+                        <Button
+                            asChild={false}
+                            onClick={togglePollStatus}
+                            className={`${
+                                isActive
+                                    ? "bg-gray-600 hover:bg-gray-500"
+                                    : "bg-blue-800 hover:bg-blue-700"
+                            } text-white py-2 w-36 px-4 rounded-md font-semibold transition duration-300`}
+                        >
+                            {isActive ? "Disable" : "Enable"}
+                        </Button>
+                    </div>
                 </div>
-            </div>
-        </div>
+            </CardContent>
+        </Card>
     );
 };
 
