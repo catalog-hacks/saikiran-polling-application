@@ -17,7 +17,7 @@ Follow these instructions to get the project up and running on your local machin
 Before running the application, you need to install the frontend dependencies. Navigate to the project root directory and execute:
 
 ```bash
-    make install-frontend
+make install-frontend
 ```
 
 ### Running the Application
