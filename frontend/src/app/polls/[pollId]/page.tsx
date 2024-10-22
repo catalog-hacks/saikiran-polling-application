@@ -1,16 +1,30 @@
-// app/polls/[pollId]/page.tsx
 import { Suspense } from "react";
 import { PollWithUserVote } from "@/types/poll";
 import PollComponent from "@/components/Poll";
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 
 async function getPollData(pollId: string): Promise<PollWithUserVote> {
     const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
     const session = await auth();
+
     if (!session) {
-        redirect("/auth");
+        try {
+            const headersList = headers();
+            const currentPath = headersList.get("x-invoke-path") || "";
+            const fullUrl = new URL(
+                headersList.get("x-invoke-path") || "",
+                `http://`
+            );
+            console.log(fullUrl);
+            redirect(`/auth?callbackUrl=${encodeURIComponent(currentPath)}`);
+        } catch (error) {
+            // Fallback to a default redirect
+            redirect("/auth");
+        }
     }
+
     const res = await fetch(
         `${backendUrl}/polls/${pollId}?userId=${session?.user?.id}`,
         {

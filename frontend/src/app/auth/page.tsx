@@ -3,7 +3,7 @@
 import { LoginForm } from "@/components/LoginForm";
 import { RegisterForm } from "@/components/RegisterForm";
 import { useSessionStore } from "@/store/useSessionStore";
-import { redirect } from "next/navigation";
+import { redirect, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useShallow } from "zustand/shallow";
 
@@ -12,24 +12,29 @@ export default function AuthPage() {
     const [status] = useSessionStore(useShallow((state) => [state.status]));
     const [loading, setLoading] = useState(true);
 
+    const searchParams = useSearchParams();
+    const callbackUrl = searchParams.get("callbackUrl") || "/";
+
     useEffect(() => {
         if (status === "authenticated") {
-            redirect("/");
-            // User is already authenticated, redirect to homepage
+            redirect(callbackUrl);
         } else if (status === "loading") {
             // Session is still loading, do nothing (optional)
         } else {
             setLoading(false);
-            // User is not authenticated, continue rendering the component
         }
-    }, [status, redirect]);
+    }, [status, callbackUrl]);
 
     return (
         <>
             {!loading && (
                 <div className=" flex items-center justify-center min-h-[calc(100vh_-_80px)]">
                     <div className="max-w-md w-full  shadow-md bg-white rounded-lg p-8">
-                        {isRegistering ? <RegisterForm /> : <LoginForm />}
+                        {isRegistering ? (
+                            <RegisterForm callbackUrl={callbackUrl} />
+                        ) : (
+                            <LoginForm callbackUrl={callbackUrl} />
+                        )}
 
                         <button
                             onClick={() => setIsRegistering(!isRegistering)}
