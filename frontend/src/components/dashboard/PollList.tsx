@@ -36,7 +36,7 @@ export default function PollsList({ initialPolls }: ClientPollsListProps) {
 
     return (
         <>
-            {polls.length === 0 ? (
+            {!polls ? (
                 <p>No polls created yet.</p>
             ) : (
                 <div className="space-y-6">
