@@ -7,7 +7,7 @@ const Page: NextPage<Props> = ({}) => {
     return (
         <div className="relative min-h-[calc(100vh_-_80px)] flex items-center justify-center bg-gradient-to-r from-purple-800 to-indigo-900">
             {/* Glassy background container */}
-            <div className="relative z-10 backdrop-blur-md bg-white bg-opacity-10 rounded-lg p-8 shadow-lg max-w-4xl mx-auto">
+            <div className="relative z-10 rounded-lg p-8  max-w-4xl mx-auto">
                 <h1 className="text-5xl font-bold mb-4 text-white">
                     The Most Secure Polling Application
                 </h1>
