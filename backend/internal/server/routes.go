@@ -19,7 +19,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 	// Hello World Route (for testing)
 	mux.HandleFunc("/", s.HelloWorldHandler)
 
-	userHandler := user.NewUserHandler(s.userService, s.webAuthn, s.db)
+	userHandler := user.NewUserHandler(s.userService, s.webAuthn, s.sessionService)
 	
 	mux.HandleFunc("/register/begin", userHandler.BeginRegistration)  
 	mux.HandleFunc("/register/finish", userHandler.FinishRegistration) 

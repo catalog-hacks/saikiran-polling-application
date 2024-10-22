@@ -10,6 +10,7 @@ import (
 
 	"github.com/SaiKiranMatta/nextjs-golang-polling-application/backend/internal/database"
 	"github.com/SaiKiranMatta/nextjs-golang-polling-application/backend/internal/poll"
+	"github.com/SaiKiranMatta/nextjs-golang-polling-application/backend/internal/session"
 	"github.com/SaiKiranMatta/nextjs-golang-polling-application/backend/internal/user"
 	"github.com/SaiKiranMatta/nextjs-golang-polling-application/backend/internal/vote"
 	"github.com/go-webauthn/webauthn/webauthn"
@@ -22,6 +23,7 @@ type Server struct {
     db          *mongo.Database
     userService *user.UserService
     pollService *poll.PollService
+    sessionService *session.SessionService
     webAuthn    *webauthn.WebAuthn
 }
 
@@ -34,6 +36,7 @@ func NewServer() *http.Server {
     userService := user.NewUserService(db)
     voteService := vote.NewVoteService(db)
     pollService := poll.NewPollService(db, voteService, userService)
+    sessionService := session.NewSessionService(db)
 
     web, err := webauthn.New(&webauthn.Config{
 		RPDisplayName: "Your App",
@@ -51,6 +54,7 @@ func NewServer() *http.Server {
         userService: userService,
         pollService: pollService,
         webAuthn:    web,
+        sessionService: sessionService,
     }
 
     // Declare Server config
