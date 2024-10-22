@@ -290,7 +290,7 @@ const PollComponent: NextPage<ClientPollComponentProps> = ({
                         {pollData.options.map((option) => (
                             <li
                                 key={option.id.toString()}
-                                className="flex items-center"
+                                className="flex items-center border px-2 py-2 rounded-md shadow"
                             >
                                 <input
                                     type={
@@ -364,7 +364,7 @@ const PollComponent: NextPage<ClientPollComponentProps> = ({
 
                             return (
                                 <div key={option.id.toString()}>
-                                    <div className="flex justify-between mb-1">
+                                    <div className="flex justify-between mb-1 px-2 py-2">
                                         <span className="text-gray-700">
                                             {option.text}
                                         </span>
@@ -396,13 +396,13 @@ const PollComponent: NextPage<ClientPollComponentProps> = ({
                                 pollData.active
                                     ? " bg-gray-600 hover:bg-gray-500"
                                     : "bg-blue-800 hover:bg-blue-700"
-                            } text-white py-2  px-4 rounded-md col-span-1 font-semibold `}
+                            } text-white py-2  px-4 rounded-md col-span-1 font-semibold shadow `}
                         >
                             {pollData.active ? "Disable" : "Enable"}
                         </button>
                         <button
                             onClick={clearPollVotes}
-                            className={`${"bg-gray-600 hover:bg-gray-500"} font-semibold text-white py-2  px-4 rounded-md col-span-1 `}
+                            className={`${"bg-gray-600 hover:bg-gray-500"} font-semibold text-white py-2  px-4 rounded-md col-span-1 shadow `}
                         >
                             Reset votes
                         </button>

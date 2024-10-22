@@ -7,6 +7,7 @@ import { MenuIcon } from "lucide-react";
 import { useShallow } from "zustand/shallow";
 import { useSessionStore } from "@/store/useSessionStore";
 import { ChevronDownIcon } from "lucide-react";
+import { Button } from "./ui/button";
 
 const Navbar = () => {
     const [status, username, checkSession] = useSessionStore(
@@ -42,28 +43,25 @@ const Navbar = () => {
 
     return (
         <nav
-            className={`fixed top-0 left-0 w-full h-20 z-50 flex justify-between items-center p-4 transition-all duration-300 bg-white shadow-md dark:bg-gray-800`}
+            className={`fixed top-0 left-0 w-full h-20 z-50 flex justify-between items-center p-4 transition-all duration-300   shadow-md bg-gray-800`}
         >
             <div className="flex items-center">
-                <Link
-                    href="/"
-                    className="text-2xl font-semibold dark:text-white"
-                >
+                <Link href="/" className="text-2xl font-semibold text-white">
                     PollingApp
+                </Link>
+                <Link
+                    href={"/polls"}
+                    className=" ml-6  hover:text-blue-500 text-gray-300"
+                >
+                    Polls
                 </Link>
                 {status === "authenticated" && (
                     <div className="hidden md:flex ml-6 space-x-6">
                         <Link
                             href="/create"
-                            className="text-gray-700 hover:text-blue-500 dark:text-gray-300"
+                            className=" hover:text-blue-500 text-gray-300"
                         >
                             Create
-                        </Link>
-                        <Link
-                            href="/mypolls"
-                            className="text-gray-700 hover:text-blue-500 dark:text-gray-300"
-                        >
-                            Dashboard
                         </Link>
                     </div>
                 )}
@@ -75,13 +73,13 @@ const Navbar = () => {
                         {status === "authenticated" ? (
                             <>
                                 <div className="relative">
-                                    <button
+                                    <Button
                                         onClick={toggleDropdown}
-                                        className="flex items-center justify-center px-6 py-3 bg-blue-800 text-white rounded-full font-semibold hover:bg-blue-700 transition duration-300 shadow-md"
+                                        className="flex items-center justify-center px-6 py-3 bg-blue-800 text-white  font-semibold hover:bg-blue-700 transition duration-300 shadow-md"
                                     >
                                         {username}
                                         <ChevronDownIcon className=" ml-1 mt-1 w-4 h-4" />
-                                    </button>
+                                    </Button>
                                     {dropdownOpen && (
                                         <div className="absolute right-0 mt-2 w-36 bg-white rounded-md shadow-lg dark:bg-gray-700">
                                             <Link
@@ -103,9 +101,9 @@ const Navbar = () => {
                             </>
                         ) : (
                             <Link href="/auth">
-                                <button className="px-6 py-3 flex items-center bg-blue-800 text-white rounded-full font-semibold hover:bg-blue-700 transition duration-300 shadow-md">
+                                <Button className="px-6 py-3 flex items-center bg-blue-800 text-white font-semibold hover:bg-blue-700 transition duration-300 shadow-md">
                                     Sign In
-                                </button>
+                                </Button>
                             </Link>
                         )}
                     </>
