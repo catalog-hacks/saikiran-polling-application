@@ -5,6 +5,7 @@ import Link from "next/link";
 
 interface PollFormData {
     question: string;
+    description: string;
     options: string[];
     multiple_choices: boolean;
 }
@@ -17,7 +18,8 @@ interface CreatePollFormProps {
 const CreatePollForm: React.FC<CreatePollFormProps> = ({ user_id, email }) => {
     const [pollData, setPollData] = useState<PollFormData>({
         question: "",
-        options: ["", ""], // Starting with two options as default
+        description: "",
+        options: ["", ""],
         multiple_choices: false,
     });
     const [error, setError] = useState<string | null>(null);
@@ -94,12 +96,12 @@ const CreatePollForm: React.FC<CreatePollFormProps> = ({ user_id, email }) => {
             });
 
             const data = await response.json();
-            console.log(data);
             setShareUrl(`${frontendUrl}/polls/${data.poll.id}`);
             if (response.ok) {
                 setSuccess("Poll created successfully!");
                 setPollData({
                     question: "",
+                    description: "",
                     options: ["", ""],
                     multiple_choices: false,
                 }); // Reset the form
@@ -125,6 +127,20 @@ const CreatePollForm: React.FC<CreatePollFormProps> = ({ user_id, email }) => {
                         <textarea
                             name="question"
                             value={pollData.question}
+                            onChange={handleInputChange}
+                            required
+                            className="mt-1 block w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-800"
+                            rows={1}
+                        />
+                    </label>
+                </div>
+
+                <div className="mb-4">
+                    <label className="block text-gray-700 font-medium mb-2">
+                        Description:
+                        <textarea
+                            name="description"
+                            value={pollData.description}
                             onChange={handleInputChange}
                             required
                             className="mt-1 block w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-800"
