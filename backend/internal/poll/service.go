@@ -269,3 +269,58 @@ func (s *PollService) ClearPollVotes(ctx context.Context, pollID primitive.Objec
 
     return nil
 }
+
+func (s *PollService) GetAllPolls(ctx context.Context, status string, skip int, limit int) ([]*Poll, int64, error) {
+    
+    
+    // Build the filter based on status
+    filter := bson.M{}
+    if status == "active" {
+        filter["active"] = true
+    } else if status == "closed" {
+        filter["active"] = false
+    }
+    
+    // Get total count for pagination
+    total, err := s.pollCollection.CountDocuments(ctx, filter)
+    if err != nil {
+        return nil, 0, err
+    }
+    
+    // Set up options for pagination and sorting
+    opts := options.Find().
+        SetSkip(int64(skip)).
+        SetLimit(int64(limit)).
+        SetSort(bson.D{{Key: "created_at", Value: -1}}) // Sort by creation date, newest first
+    
+    // Execute the query
+    cursor, err := s.pollCollection.Find(ctx, filter, opts)
+    if err != nil {
+        return nil, 0, err
+    }
+    defer cursor.Close(ctx)
+    
+    // Decode the results
+    var polls []*Poll
+    if err = cursor.All(ctx, &polls); err != nil {
+        return nil, 0, err
+    }
+    
+        return polls, total, nil
+}
+
+
+// GetActivePollsCount returns the total number of active polls
+func (s *PollService) GetActivePollsCount(ctx context.Context) (int64, error) {
+    return s.pollCollection.CountDocuments(ctx, bson.M{"active": true})
+}
+
+// GetClosedPollsCount returns the total number of closed polls
+func (s *PollService) GetClosedPollsCount(ctx context.Context) (int64, error) {
+    return s.pollCollection.CountDocuments(ctx, bson.M{"active": false})
+}
+
+// GetTotalPollsCount returns the total number of polls
+func (s *PollService) GetTotalPollsCount(ctx context.Context) (int64, error) {
+    return s.pollCollection.CountDocuments(ctx, bson.M{})
+}
