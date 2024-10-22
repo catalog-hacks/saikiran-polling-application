@@ -33,7 +33,7 @@ export default function AuthPage() {
 
                         <button
                             onClick={() => setIsRegistering(!isRegistering)}
-                            className="mt-4 w-full bg-gray-200  py-2 rounded-lg hover:bg-gray-100 transition duration-300 text-gray-900"
+                            className="mt-4 w-full font-semibold bg-gray-200  py-2 rounded-lg hover:bg-gray-100 transition duration-300 text-gray-900"
                         >
                             {isRegistering
                                 ? "Switch to Login"

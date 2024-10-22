@@ -42,7 +42,7 @@ export function RegisterForm() {
 
             <button
                 type="submit"
-                className="w-full bg-blue-800 text-white py-2 rounded-lg hover:bg-blue-700 transition duration-300"
+                className="w-full bg-blue-800 text-white font-semibold py-2 rounded-lg hover:bg-blue-700 transition duration-300"
             >
                 Register
             </button>

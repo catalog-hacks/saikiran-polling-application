@@ -3,10 +3,14 @@ import { Suspense } from "react";
 import { PollWithUserVote } from "@/types/poll";
 import PollComponent from "@/components/Poll";
 import { auth } from "@/auth";
+import { redirect } from "next/navigation";
 
 async function getPollData(pollId: string): Promise<PollWithUserVote> {
     const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
     const session = await auth();
+    if (!session) {
+        redirect("/auth");
+    }
     const res = await fetch(
         `${backendUrl}/polls/${pollId}?userId=${session?.user?.id}`,
         {
