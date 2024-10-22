@@ -31,3 +31,10 @@ export interface UserVote {
 export interface PollWithUserVote extends Poll {
     user_vote: UserVote | null;
 }
+
+export interface PollsResponse {
+    polls: Poll[];
+    total: number;
+    currentPage: number;
+    totalPages: number;
+}
