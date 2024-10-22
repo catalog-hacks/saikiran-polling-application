@@ -47,7 +47,7 @@ const PollComponent: NextPage<ClientPollComponentProps> = ({
     );
     const [voteChanged, setVoteChanged] = useState<boolean>(false);
     const [isCreator, setIsCreator] = useState<boolean>(
-        initialPollData?.created_by?.toString() === user_id
+        initialPollData?.created_by?.toString() == user_id
     );
     const [chartType, setChartType] = useState<"bar" | "pie">("bar");
 
@@ -120,6 +120,10 @@ const PollComponent: NextPage<ClientPollComponentProps> = ({
             return cleanUp;
         }
     }, [pollId, user_id]);
+
+    useEffect(() => {
+        setIsCreator(initialPollData?.created_by?.toString() == user_id);
+    }, [user_id, initialPollData]);
 
     useEffect(() => {
         setVoteChanged(
@@ -325,7 +329,7 @@ const PollComponent: NextPage<ClientPollComponentProps> = ({
                             selectedOptions.length === 0 ||
                             !voteChanged
                         }
-                        className={`mt-6 w-full py-2 px-4 rounded-md text-white ${
+                        className={`mt-6 w-full py-2 px-4 rounded-md font-semibold text-white ${
                             selectedOptions.length === 0 ||
                             !voteChanged ||
                             !pollData.active
@@ -389,15 +393,15 @@ const PollComponent: NextPage<ClientPollComponentProps> = ({
                             onClick={togglePollStatus}
                             className={`${
                                 pollData.active
-                                    ? "bg-red-700 hover:bg-red-500"
+                                    ? " bg-gray-600 hover:bg-gray-500"
                                     : "bg-blue-800 hover:bg-blue-700"
-                            } text-white py-2  px-4 rounded-md col-span-1 `}
+                            } text-white py-2  px-4 rounded-md col-span-1 font-semibold `}
                         >
                             {pollData.active ? "Disable" : "Enable"}
                         </button>
                         <button
                             onClick={clearPollVotes}
-                            className={`${"bg-red-700 hover:bg-red-500"} text-white py-2  px-4 rounded-md col-span-1 `}
+                            className={`${"bg-gray-600 hover:bg-gray-500"} font-semibold text-white py-2  px-4 rounded-md col-span-1 `}
                         >
                             Reset votes
                         </button>
