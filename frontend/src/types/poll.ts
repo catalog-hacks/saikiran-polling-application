@@ -1,15 +1,14 @@
-// poll.ts in /src/types
-
 import { ObjectId } from "mongodb";
 
 export interface Poll {
     id: ObjectId;
     question: string;
+    description: string;
     options: Option[];
-    createdBy: ObjectId;
-    createdAt: Date;
+    created_by: ObjectId;
+    created_at: Date;
     votes: Vote[];
-    multipleChoices: boolean;
+    multiple_choices: boolean;
     active: boolean;
 }
 
@@ -23,4 +22,19 @@ export interface Vote {
     userId: ObjectId;
     optionIds: ObjectId[];
     votedAt: Date;
+}
+
+export interface UserVote {
+    option_ids: string[];
+}
+
+export interface PollWithUserVote extends Poll {
+    user_vote: UserVote | null;
+}
+
+export interface PollsResponse {
+    polls: Poll[];
+    total: number;
+    currentPage: number;
+    totalPages: number;
 }

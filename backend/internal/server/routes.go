@@ -19,7 +19,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 	// Hello World Route (for testing)
 	mux.HandleFunc("/", s.HelloWorldHandler)
 
-	userHandler := user.NewUserHandler(s.userService, s.webAuthn, s.db)
+	userHandler := user.NewUserHandler(s.userService, s.webAuthn, s.sessionService)
 	
 	mux.HandleFunc("/register/begin", userHandler.BeginRegistration)  
 	mux.HandleFunc("/register/finish", userHandler.FinishRegistration) 
@@ -32,8 +32,11 @@ func (s *Server) RegisterRoutes() http.Handler {
 	mux.HandleFunc("/polls", pollHandler.CreatePoll).Methods("POST")
 	mux.HandleFunc("/polls/{id}/vote", pollHandler.Vote).Methods("POST")
 	mux.HandleFunc("/polls/{id}/stream", pollHandler.StreamPollUpdates).Methods("GET")
+	mux.HandleFunc("/userpolls", pollHandler.GetPollsByUser).Methods("GET")
+	mux.HandleFunc("/polls/{id}/status", pollHandler.TogglePollStatus).Methods("PUT")
+	mux.HandleFunc("/polls/{id}/clear-votes", pollHandler.ClearPollVotes).Methods("POST")
+	mux.HandleFunc("/polls",pollHandler.GetAllPolls ).Methods("GET")
 
-	
 	return mux
 }
 

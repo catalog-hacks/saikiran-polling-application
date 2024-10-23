@@ -86,3 +86,38 @@ func (s *VoteService) GetVotesForPoll(ctx context.Context, pollID primitive.Obje
 
 	return votes, nil
 }
+
+func (s *VoteService) GetVote(ctx context.Context, pollID, userID primitive.ObjectID) (*Vote, error) {
+    var vote Vote
+    err := s.voteCollection.FindOne(ctx, bson.M{
+        "poll_id": pollID,
+        "user_id": userID,
+    }).Decode(&vote)
+
+    if err != nil {
+        return nil, err
+    }
+
+    return &vote, nil
+}
+
+func (s *VoteService) UpdateVote(ctx context.Context, existingVote *Vote, newOptionIDs []primitive.ObjectID) error {
+    filter := bson.M{
+        "poll_id": existingVote.PollID,
+        "user_id": existingVote.UserID,
+    }
+    update := bson.M{
+        "$set": bson.M{
+            "option_ids": newOptionIDs,
+            "voted_at":   time.Now(),
+        },
+    }
+
+    _, err := s.voteCollection.UpdateOne(ctx, filter, update)
+    return err
+}
+
+
+func (s *VoteService) DeletePollVotes(ctx context.Context, pollID primitive.ObjectID) (*mongo.DeleteResult, error) {
+    return s.voteCollection.DeleteMany(ctx, bson.M{"poll_id": pollID})
+}

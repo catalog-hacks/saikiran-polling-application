@@ -30,10 +30,10 @@ export default function RootLayout({
             <body
                 className={`${geistSans.variable} ${geistMono.variable} antialiased`}
             >
-                <SessionProvider>
-                    <Navbar />
-                    <div className="pt-20">{children}</div>
-                </SessionProvider>
+                <Navbar />
+                <div className="mt-20 bg-gray-100 min-h-[calc(100vh_-_80px)] light">
+                    {children}
+                </div>
             </body>
         </html>
     );

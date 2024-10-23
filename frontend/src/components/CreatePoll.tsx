@@ -1,10 +1,13 @@
 import { usePasskeyAuth } from "@/hooks/usePasskeyAuth";
 import React, { useState } from "react";
+import ShareButton from "./dashboard/ShareUrl";
+import Link from "next/link";
 
 interface PollFormData {
     question: string;
+    description: string;
     options: string[];
-    multiple_choice: boolean;
+    multiple_choices: boolean;
 }
 
 interface CreatePollFormProps {
@@ -15,13 +18,17 @@ interface CreatePollFormProps {
 const CreatePollForm: React.FC<CreatePollFormProps> = ({ user_id, email }) => {
     const [pollData, setPollData] = useState<PollFormData>({
         question: "",
-        options: ["", ""], // Starting with two options as default
-        multiple_choice: false,
+        description: "",
+        options: ["", ""],
+        multiple_choices: false,
     });
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const { verifyPasskey } = usePasskeyAuth();
+    const [shareUrl, setShareUrl] = useState<string | null>(null);
+    const frontendUrl =
+        process.env.NEXT_PUBLIC_FRONTEND_URL || "http://localhost:3000";
 
     const handleInputChange = (
         e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -89,13 +96,14 @@ const CreatePollForm: React.FC<CreatePollFormProps> = ({ user_id, email }) => {
             });
 
             const data = await response.json();
-
+            setShareUrl(`${frontendUrl}/polls/${data.poll.id}`);
             if (response.ok) {
                 setSuccess("Poll created successfully!");
                 setPollData({
                     question: "",
+                    description: "",
                     options: ["", ""],
-                    multiple_choice: false,
+                    multiple_choices: false,
                 }); // Reset the form
             } else {
                 setError(data.message || "Failed to create poll.");
@@ -121,7 +129,21 @@ const CreatePollForm: React.FC<CreatePollFormProps> = ({ user_id, email }) => {
                             value={pollData.question}
                             onChange={handleInputChange}
                             required
-                            className="mt-1 block w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="mt-1 block w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-800"
+                            rows={1}
+                        />
+                    </label>
+                </div>
+
+                <div className="mb-4">
+                    <label className="block text-gray-700 font-medium mb-2">
+                        Description:
+                        <textarea
+                            name="description"
+                            value={pollData.description}
+                            onChange={handleInputChange}
+                            required
+                            className="mt-1 block w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-800"
                             rows={3}
                         />
                     </label>
@@ -147,7 +169,7 @@ const CreatePollForm: React.FC<CreatePollFormProps> = ({ user_id, email }) => {
                                         )
                                     }
                                     required
-                                    className="mt-1 block w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    className="mt-1 block w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-800"
                                 />
                             </label>
                         </div>
@@ -155,7 +177,7 @@ const CreatePollForm: React.FC<CreatePollFormProps> = ({ user_id, email }) => {
                     <button
                         type="button"
                         onClick={addOption}
-                        className="mt-4 bg-blue-500 text-white py-2 px-4 rounded-md w-full hover:bg-blue-600"
+                        className="mt-4 bg-blue-800 text-white py-2 px-4 rounded-md w-full hover:bg-blue-700"
                     >
                         Add Option
                     </button>
@@ -166,14 +188,14 @@ const CreatePollForm: React.FC<CreatePollFormProps> = ({ user_id, email }) => {
                         <input
                             type="checkbox"
                             name="multiple_choice"
-                            checked={pollData.multiple_choice}
+                            checked={pollData.multiple_choices}
                             onChange={(e) =>
                                 setPollData((prev) => ({
                                     ...prev,
-                                    multiple_choice: e.target.checked,
+                                    multiple_choices: e.target.checked,
                                 }))
                             }
-                            className="h-4 w-4 text-blue-500 border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+                            className="h-4 w-4 text-blue-800 border-gray-300 rounded focus:ring-2 focus:ring-blue-800"
                         />
                         <span className="ml-2">Allow multiple choices</span>
                     </label>
@@ -183,10 +205,10 @@ const CreatePollForm: React.FC<CreatePollFormProps> = ({ user_id, email }) => {
                     <button
                         type="submit"
                         disabled={isSubmitting}
-                        className={`w-full bg-blue-500 text-white py-2 px-4 rounded-md ${
+                        className={`w-full bg-blue-800 text-white py-2 px-4 rounded-md ${
                             isSubmitting
                                 ? "cursor-not-allowed opacity-50"
-                                : "hover:bg-blue-600"
+                                : "hover:bg-blue-700"
                         }`}
                     >
                         {isSubmitting ? "Creating..." : "Create Poll"}
@@ -194,7 +216,19 @@ const CreatePollForm: React.FC<CreatePollFormProps> = ({ user_id, email }) => {
                 </div>
 
                 {error && <p className="text-red-500 text-sm">{error}</p>}
-                {success && <p className="text-green-500 text-sm">{success}</p>}
+                {success && shareUrl && (
+                    <div className=" flex justify-between items-center">
+                        <div className="text-green-500 text-sm">
+                            <span>{success}</span>{" "}
+                            <Link href={shareUrl}>
+                                <span className=" hover:underline">
+                                    Go to poll
+                                </span>
+                            </Link>
+                        </div>
+                        <ShareButton shareUrl={shareUrl} />
+                    </div>
+                )}
             </form>
         </div>
     );

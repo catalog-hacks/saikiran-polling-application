@@ -49,3 +49,7 @@ Clean up binary from the last build:
 ```bash
 make clean
 ```
+
+## API Testing
+
+For Postman testing, you can use the following link to access the collection: [Polling Application Postman Collection](https://www.postman.com/lunar-module-saganist-60406197/workspace/polling-application/collection/28198110-8d42df68-d3f5-4ca4-9a6b-c9f81ea2ed5a?action=share&creator=28198110).

@@ -1,3 +1,4 @@
+import { getToken } from "next-auth/jwt";
 import { NextResponse } from "next/server";
 
 export const GET = async (
@@ -5,10 +6,9 @@ export const GET = async (
     { params }: { params: { pollId: string } }
 ) => {
     const { pollId } = params;
-
-    const url = new URL(request.url);
-    const userId = url.searchParams.get("userId");
-
+    const secret = process.env.AUTH_SECRET;
+    const session = await getToken({ req: request, secret });
+    const userId = session?.id;
     const backendUrl = process.env.BACKEND_URL;
 
     try {

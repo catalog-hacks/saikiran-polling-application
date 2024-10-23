@@ -9,6 +9,7 @@ import (
 type Poll struct {
 	ID        primitive.ObjectID   `bson:"_id" json:"id"`
 	Question  string               `bson:"question" json:"question"`
+	Description string 			   `bson:"description" json:"description"`
 	Options   []Option             `bson:"options" json:"options"`
 	CreatedBy primitive.ObjectID   `bson:"created_by" json:"created_by"`
 	CreatedAt time.Time            `bson:"created_at" json:"created_at"`

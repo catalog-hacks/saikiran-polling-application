@@ -8,7 +8,11 @@ import { signIn } from "next-auth/react";
 export function usePasskeyAuth() {
     const [error, setError] = useState<string | null>(null);
 
-    const register = async (email: string, name: string) => {
+    const register = async (
+        email: string,
+        name: string,
+        callbackUrl: string
+    ) => {
         try {
             // Start registration
             const beginRes = await fetch("/api/auth/register/begin", {
@@ -33,12 +37,16 @@ export function usePasskeyAuth() {
 
             if (verifyRes.ok) {
                 // Registration successful, now sign in
-                const result = await signIn("credentials", {
-                    email,
-                    name,
-                    action: "register",
-                    redirect: false,
-                });
+                const result = await signIn(
+                    "credentials",
+                    {
+                        email,
+                        name,
+                        action: "register",
+                        redirect: true,
+                    },
+                    callbackUrl
+                );
 
                 if (result?.error) {
                     setError(result.error);
@@ -54,7 +62,7 @@ export function usePasskeyAuth() {
         }
     };
 
-    const login = async (email: string) => {
+    const login = async (email: string, callbackUrl: string) => {
         try {
             // Start authentication
             const beginRes = await fetch("/api/auth/login/begin", {
@@ -78,11 +86,15 @@ export function usePasskeyAuth() {
 
             if (verifyRes.ok) {
                 // Authentication successful, now sign in
-                const result = await signIn("credentials", {
-                    email,
-                    action: "login",
-                    redirect: false,
-                });
+                const result = await signIn(
+                    "credentials",
+                    {
+                        email,
+                        action: "login",
+                        redirect: true,
+                    },
+                    callbackUrl
+                );
 
                 if (result?.error) {
                     setError(result.error);
