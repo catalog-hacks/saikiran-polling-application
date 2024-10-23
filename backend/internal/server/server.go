@@ -89,9 +89,11 @@ func NewServer() *http.Server {
 
 // CORS middleware function
 func corsMiddleware(next http.Handler) http.Handler {
+    allowedOrigins := os.Getenv("ALLOWED_ORIGINS")
+
     return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
         // Set CORS headers
-        w.Header().Set("Access-Control-Allow-Origin", "*") 
+        w.Header().Set("Access-Control-Allow-Origin", allowedOrigins)
         w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
         w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 

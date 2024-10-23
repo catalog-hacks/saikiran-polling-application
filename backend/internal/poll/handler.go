@@ -6,6 +6,7 @@ import (
 	"log"
 	"math"
 	"net/http"
+	"os"
 	"strconv"
 	"sync"
 	"time"
@@ -177,11 +178,12 @@ func (h *PollHandler) Vote(w http.ResponseWriter, r *http.Request) {
 func (h *PollHandler) StreamPollUpdates(w http.ResponseWriter, r *http.Request) {
     pollID := mux.Vars(r)["id"]
 
+    allowedOrigins := os.Getenv("ALLOWED_ORIGINS")
     // Set headers for SSE
     w.Header().Set("Content-Type", "text/event-stream")
     w.Header().Set("Cache-Control", "no-cache")
     w.Header().Set("Connection", "keep-alive")
-    w.Header().Set("Access-Control-Allow-Origin", "*")
+    w.Header().Set("Access-Control-Allow-Origin", allowedOrigins)
     w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 
     flusher, ok := w.(http.Flusher)
